@@ -4,7 +4,8 @@ metadata:
   name: deploy-checker
   namespace: argocd
 spec:
-  schedule: "*/5 * * * *"
+  schedule: "*/5 * * * *"  # Ejecuta cada 5 minutos
+  concurrencyPolicy: Forbid  # No permite que se ejecute un nuevo Job si ya hay uno en ejecución
   jobTemplate:
     spec:
       template:
