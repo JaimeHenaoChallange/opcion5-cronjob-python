@@ -138,6 +138,11 @@ graph TD;
    kubectl get svc flask-service -n poc
    ```
 
+14. Ejecuta el túnel de Minikube:
+   ```bash
+   minikube tunnel
+   ```
+
 ## Configuración
 
 ### 1. Crear el Archivo `.env`
@@ -259,10 +264,25 @@ opcion5-cronjob-python/
 └── README.md                  # Documentación del proyecto
 ```
 
----
+## Workflows de GitHub Actions
 
-### **Notas**
+Este repositorio incluye dos workflows para automatizar el despliegue de la aplicación Flask y el CronJob:
 
-- El diagrama de flujo está en formato Markdown para facilitar su visualización en herramientas compatibles como GitHub.
-- La estructura del proyecto está documentada para que sea fácil de entender y navegar.
-- Asegúrate de reemplazar `<your-dockerhub-username>` y `<your-repo>` con los valores correspondientes a tu entorno.
+1. **Deploy Flask App**:
+   - Ubicación: `.github/workflows/flask-app-deploy.yml`
+   - Se ejecuta automáticamente cuando se realizan cambios en el directorio `app_flask`.
+   - Pasos:
+     - Construye y sube la imagen Docker de la aplicación Flask.
+
+2. **Deploy CronJob**:
+   - Ubicación: `.github/workflows/cronjob-deploy.yml`
+   - Se ejecuta automáticamente cuando se realizan cambios en el directorio `cronjob`.
+   - Pasos:
+     - Construye y sube la imagen Docker del CronJob.
+
+### Configuración de Secretos
+
+Para que los workflows funcionen correctamente, asegúrate de configurar los siguientes secretos en GitHub:
+
+- **DOCKER_USERNAME_JAIME**: Tu nombre de usuario de Docker Hub.
+- **DOCKER_PASSWORD_JAIME**: Tu contraseña de Docker Hub.

@@ -1,0 +1,28 @@
+name: Deploy Flask App
+
+on:
+  push:
+    paths:
+      - 'app_flask/**' # Solo se ejecuta si hay cambios en el directorio app_flask
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Clonar el repositorio
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 2. Configurar Docker
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME_JAIME }}
+        password: ${{ secrets.DOCKER_PASSWORD_JAIME }}
+
+    # 3. Construir y subir la imagen Docker
+    - name: Build and push Docker image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app:latest ./app_flask
+        docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
