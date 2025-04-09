@@ -131,6 +131,51 @@ kubectl config use-context minikube
 
 ---
 
+## **Flow Diagram**
+
+Below is a textual representation of the project flow:
+
+```plaintext
+Start
+  |
+  v
+[Minikube Setup] --> [Install ArgoCD]
+  |                     |
+  v                     v
+[Build Docker Images]   [Expose ArgoCD Server]
+  |                     |
+  v                     v
+[Deploy Flask App]      [Deploy CronJob]
+  |                     |
+  v                     v
+[Verify Deployments]    [Monitor Applications]
+  |                     |
+  v                     v
+[Slack Notifications] <--- [Sync Applications]
+  |
+  v
+End
+```
+
+You can visualize this flow using a tool like Mermaid. Example:
+
+```mermaid
+flowchart TD
+    A[Start] --> B[Minikube Setup]
+    B --> C[Install ArgoCD]
+    C --> D[Expose ArgoCD Server]
+    B --> E[Build Docker Images]
+    E --> F[Deploy Flask App]
+    E --> G[Deploy CronJob]
+    F --> H[Verify Deployments]
+    G --> I[Monitor Applications]
+    I --> J[Sync Applications]
+    J --> K[Slack Notifications]
+    K --> L[End]
+```
+
+---
+
 ## **GitHub Actions Workflows**
 
 ### **1. Flask Application Workflow**
