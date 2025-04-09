@@ -25,8 +25,12 @@ jobs:
     - name: Build and push Docker image
       run: |
         if [ -z "${{ secrets.DOCKER_USERNAME_JAIME }}" ]; then
-          echo "Error: DOCKER_USERNAME secret is not set."
+          echo "Error: DOCKER_USERNAME_JAIME secret is not set."
           exit 1
         fi
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/deploy-script:latest ./cronjob
-        docker push ${{ secrets.DOCKER_USERNAME }}/deploy-script:latest
+        if [ -z "${{ secrets.DOCKER_PASSWORD_JAIME }}" ]; then
+          echo "Error: DOCKER_PASSWORD_JAIME secret is not set."
+          exit 1
+        fi
+        docker build -t ${{ secrets.DOCKER_USERNAME_JAIME }}/deploy-script:latest ./cronjob
+        docker push ${{ secrets.DOCKER_USERNAME_JAIME }}/deploy-script:latest
