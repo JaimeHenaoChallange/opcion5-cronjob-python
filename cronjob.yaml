@@ -1,0 +1,19 @@
+
+#### **`cronjob.yaml`**
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: deploy-checker
+  namespace: default
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: deploy-checker
+              image: deploy-checker:latest
+              command: ["python", "/app/deploy_script.py"]
+          restartPolicy: OnFailure
