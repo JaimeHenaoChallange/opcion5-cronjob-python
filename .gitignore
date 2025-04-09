@@ -1,0 +1,33 @@
+# Ignorar archivos de configuración sensibles
+.env
+
+# Ignorar archivos y carpetas de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+
+# Ignorar archivos de logs
+*.log
+
+# Ignorar archivos de Docker
+*.dockerignore
+Dockerfile~
+
+# Ignorar archivos de configuración de Kubernetes
+*.yaml~
+
+# Ignorar archivos de IDEs y editores
+.vscode/
+.idea/
+*.swp
+
+# Ignorar archivos de compilación
+*.out
+*.o
+*.so
+
+# Ignorar archivos de sistema
+.DS_Store
+Thumbs.db

@@ -1,6 +1,3 @@
-
-#### **`cronjob.yaml`**
-```yaml
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -14,6 +11,8 @@ spec:
         spec:
           containers:
             - name: deploy-checker
-              image: deploy-checker:latest
-              command: ["python", "/app/deploy_script.py"]
+              image: jaimehenao8126/opcion5-deploy-script:latest
+              envFrom:
+                - secretRef:
+                    name: slack-webhook-secret
           restartPolicy: OnFailure

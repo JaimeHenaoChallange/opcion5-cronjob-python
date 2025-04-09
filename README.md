@@ -11,6 +11,7 @@ El CronJob verifica periódicamente el estado de una aplicación gestionada por 
 - `deploy_script.py`: Script en Python que maneja los reintentos y notificaciones.
 - `Dockerfile`: Imagen base para ejecutar el script.
 - `cronjob.yaml`: Configuración del CronJob en Kubernetes.
+- `.env`: Archivo para almacenar configuraciones sensibles relacionadas con ArgoCD (no se sube al repositorio).
 
 ## Requisitos Previos
 
@@ -105,6 +106,19 @@ El CronJob verifica periódicamente el estado de una aplicación gestionada por 
    ```bash
    kubectl apply -f application.yaml
    ```
+
+## Configuración
+
+### 1. Crear el Archivo `.env`
+
+Crea un archivo `.env` en el directorio del proyecto con el siguiente contenido:
+
+```plaintext
+ARGOCD_SERVER=localhost:8080
+ARGOCD_USERNAME=admin
+ARGOCD_PASSWORD=Thomas#1109
+ARTIFACT_NAME=microservice
+```
 
 #### **`cronjob.yaml`**
 ```yaml
