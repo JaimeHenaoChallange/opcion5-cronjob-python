@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cronjob-deploy-checker
+  namespace: argocd
+spec:
+  project: poc
+  source:
+    repoURL: https://github.com/JaimeHenaoChallange/opcion5-cronjob-python.git
+    targetRevision: HEAD
+    path: cronjob
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: poc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
