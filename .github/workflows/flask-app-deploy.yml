@@ -4,6 +4,14 @@ on:
   push:
     paths:
       - 'app_flask/**' # Solo se ejecuta si hay cambios en el directorio app_flask
+      - '!README.md'
+    branches:
+      - main
+
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME_JAIME }}
+  DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD_JAIME }}
+  IMAGE_NAME: flask-app
 
 jobs:
   build-and-push:
@@ -22,7 +30,19 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD_JAIME }}
 
     # 3. Construir y subir la imagen Docker
-    - name: Build and push Docker image
+    - name: Build Docker image
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app:latest ./app_flask
-        docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
+        docker build -t ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -f ./app_flask/main.py ./app_flask
+
+    - name: Push Docker image
+      run: |
+        docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+    - name: Update deployment.yaml and commit
+      run: |
+        sed -i 's|image:.*|image: '${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}'|' ./app_flask/deployment.yaml
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'actions@github.com'
+        git add ./app_flask/deployment.yaml
+        git commit -m "Update deployment.yaml with new image tag" || echo "No changes to commit"
+        git push

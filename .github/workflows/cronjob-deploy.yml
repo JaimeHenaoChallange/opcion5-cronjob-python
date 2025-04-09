@@ -2,8 +2,17 @@ name: Deploy CronJob
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'cronjob/**' # Solo se ejecuta si hay cambios en el directorio cronjob
+      - '!README.md'
+
+
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME_JAIME }}
+  DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD_JAIME }}
+  IMAGE_NAME: opcion5-deploy-script
 
 jobs:
   build-and-push:
@@ -22,15 +31,19 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD_JAIME }}
 
     # 3. Construir y subir la imagen Docker
-    - name: Build and push Docker image
+    - name: Build Docker image
       run: |
-        if [ -z "${{ secrets.DOCKER_USERNAME_JAIME }}" ]; then
-          echo "Error: DOCKER_USERNAME_JAIME secret is not set."
-          exit 1
-        fi
-        if [ -z "${{ secrets.DOCKER_PASSWORD_JAIME }}" ]; then
-          echo "Error: DOCKER_PASSWORD_JAIME secret is not set."
-          exit 1
-        fi
-        docker build -t ${{ secrets.DOCKER_USERNAME_JAIME }}/deploy-script:latest ./cronjob
-        docker push ${{ secrets.DOCKER_USERNAME_JAIME }}/deploy-script:latest
+        docker build -t ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -f ./cronjob/deploy_script.py ./cronjob
+
+    - name: Push Docker image
+      run: |
+        docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+    - name: Update deployment.yaml and commit
+      run: |
+        sed -i 's|image:.*|image: '${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}'|' ./cronjob/cronjob.yaml
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'actions@github.com'
+        git add ./cronjob/cronjob.yaml
+        git commit -m "Update cronjob.yaml with new image tag" || echo "No changes to commit"
+        git push
