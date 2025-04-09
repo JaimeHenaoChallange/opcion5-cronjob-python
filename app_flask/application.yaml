@@ -2,16 +2,16 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: microservice
-  namespace: argocd
+  namespace: poc
 spec:
   project: default
   source:
     repoURL: https://github.com/JaimeHenaoChallange/opcion5-cronjob-python.git
     targetRevision: HEAD
-    path: .
+    path: ./app_flask
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: poc
   syncPolicy:
     automated:
       prune: true
