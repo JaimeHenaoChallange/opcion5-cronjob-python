@@ -15,4 +15,14 @@ spec:
               envFrom:
                 - secretRef:
                     name: slack-webhook-secret
+              env:
+                - name: ARGOCD_SERVER
+                  value: "localhost:8080"
+                - name: ARGOCD_USERNAME
+                  value: "admin"
+                - name: ARGOCD_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: argocd-secret
+                      key: password
           restartPolicy: OnFailure
