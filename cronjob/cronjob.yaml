@@ -24,6 +24,6 @@ spec:
                 - name: ARGOCD_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: argocd-secret
-                      key: password
+                      name: argocd-secret  # Se mantiene el secreto correcto
+                      key: admin.password  # Cambiado para usar la clave correcta
           restartPolicy: OnFailure
