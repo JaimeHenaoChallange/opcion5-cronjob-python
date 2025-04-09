@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: deploy-checker
-  namespace: default
+  namespace: argocd
 spec:
   schedule: "*/5 * * * *"
   jobTemplate:

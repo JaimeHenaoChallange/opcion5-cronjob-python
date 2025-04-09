@@ -1,10 +1,29 @@
-# Opción 5: Kubernetes CronJob con Script en Python
+# Opción 5: Kubernetes CronJob con Script en Python y Aplicación Flask
 
-Este directorio contiene los archivos necesarios para implementar un CronJob en Kubernetes que ejecuta un script en Python para manejar reintentos de despliegue y notificaciones en Slack.
+Este proyecto incluye una aplicación Flask desplegada con ArgoCD y un CronJob que analiza todas las aplicaciones gestionadas por ArgoCD.
 
-## Descripción
+---
 
-El CronJob verifica periódicamente el estado de una aplicación gestionada por ArgoCD. Si la aplicación está en estado `degraded` o `error`, el script intenta sincronizarla hasta 5 veces. Si después de los intentos sigue fallando, la aplicación se pausa y se envía una notificación a Slack.
+## **Descripción**
+
+El CronJob verifica periódicamente el estado de las aplicaciones gestionadas por ArgoCD. Si alguna aplicación está en estado `degraded` o `error`, el script intenta sincronizarla hasta 5 veces. Si después de los intentos sigue fallando, la aplicación se pausa y se envía una notificación a Slack.
+
+---
+
+## **Diagrama de Flujo**
+
+El siguiente diagrama describe el flujo de trabajo del CronJob:
+
+```plaintext
+graph TD;
+    A[Inicio del CronJob] --> B[Obtener lista de aplicaciones de ArgoCD]
+    B -->|Aplicación en estado Healthy| C[Fin]
+    B -->|Aplicación en estado Degraded/Error| D[Intentar sincronización]
+    D -->|Sincronización exitosa| C
+    D -->|Sincronización fallida tras 5 intentos| E[Pausar aplicación]
+    E --> F[Enviar notificación a Slack]
+    F --> C
+```
 
 ## Archivos
 
@@ -60,24 +79,24 @@ El CronJob verifica periódicamente el estado de una aplicación gestionada por 
    docker build -t deploy-checker:latest .
    docker build -t <your-dockerhub-username>/microservice:latest .
    docker push <your-dockerhub-username>/microservice:latest
-   docker build -t <your-dockerhub-username>/deploy-script:latest .
+   docker build -t <your-dockerhub-username>/deploy-script:latest cronjob/
    docker push <your-dockerhub-username>/deploy-script:latest
    ```
 
 7. Aplica la configuración del CronJob:
    ```bash
-   kubectl apply -f cronjob.yaml
+   kubectl apply -f cronjob/cronjob.yaml
    ```
 
 8. Verifica el estado del CronJob:
    ```bash
-   kubectl get cronjob
+   kubectl get cronjob -n argocd
    ```
 
 9. Verifica los pods y logs del job:
    ```bash
    kubectl get pods
-   kubectl logs <job-pod-name>
+   kubectl logs <job-pod-name> -n argocd
    ```
 
 10. Configura la aplicación en ArgoCD:
@@ -105,6 +124,18 @@ El CronJob verifica periódicamente el estado de una aplicación gestionada por 
 11. Aplica la configuración de la aplicación:
    ```bash
    kubectl apply -f application.yaml
+   ```
+
+12. Aplica la configuración de la aplicación Flask:
+   ```bash
+   kubectl apply -f app_flask/deployment.yaml
+   kubectl apply -f app_flask/service.yaml
+   kubectl apply -f app_flask/application.yaml
+   ```
+
+13. Verifica el servicio de la aplicación Flask:
+   ```bash
+   kubectl get svc flask-service -n poc
    ```
 
 ## Configuración
@@ -200,3 +231,38 @@ COPY . .
 RUN pip install requests
 CMD ["python", "deploy_script.py"]
 ```
+
+1. Construir y subir la imagen Docker de la aplicación Flask:
+   ```bash
+   docker build -t <your-dockerhub-username>/flask-app:latest .
+   docker push <your-dockerhub-username>/flask-app:latest
+```
+
+Con estos pasos, tendrás una aplicación Flask gestionada por ArgoCD y un CronJob que analiza todas las aplicaciones del clúster.
+
+## Estructura del Proyecto
+
+```plaintext
+opcion5-cronjob-python/
+├── app_flask/
+│   ├── main.py                # Código de la aplicación Flask
+│   ├── Dockerfile             # Dockerfile para la aplicación Flask
+│   ├── deployment.yaml        # Despliegue de la aplicación Flask en Kubernetes
+│   ├── service.yaml           # Servicio para exponer la aplicación Flask
+│   └── application.yaml       # Configuración de ArgoCD para la aplicación Flask
+├── cronjob/
+│   ├── deploy_script.py       # Script en Python para el CronJob
+│   ├── Dockerfile             # Dockerfile para el CronJob
+│   └── cronjob.yaml           # Configuración del CronJob en Kubernetes
+├── .env                       # Variables de entorno (no se sube al repositorio)
+├── .gitignore                 # Archivos ignorados por Git
+└── README.md                  # Documentación del proyecto
+```
+
+---
+
+### **Notas**
+
+- El diagrama de flujo está en formato Markdown para facilitar su visualización en herramientas compatibles como GitHub.
+- La estructura del proyecto está documentada para que sea fácil de entender y navegar.
+- Asegúrate de reemplazar `<your-dockerhub-username>` y `<your-repo>` con los valores correspondientes a tu entorno.

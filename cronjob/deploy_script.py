@@ -17,7 +17,7 @@ ARGOCD_PASSWORD = os.getenv("ARGOCD_PASSWORD")
 def get_slack_webhook():
     kubernetes.config.load_incluster_config()
     v1 = kubernetes.client.CoreV1Api()
-    secret = v1.read_namespaced_secret("slack-webhook-secret", "default")
+    secret = v1.read_namespaced_secret("slack-webhook-secret", "argocd")
     return secret.data["SLACK_WEBHOOK_URL"]
 
 SLACK_WEBHOOK_URL = get_slack_webhook()
