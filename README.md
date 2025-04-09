@@ -1,153 +1,271 @@
-# Opción 5: Kubernetes CronJob con Script en Python y Aplicación Flask
+# Option 5: Kubernetes CronJob with Python Script and Flask Application
 
-Este proyecto incluye una aplicación Flask desplegada con ArgoCD y un CronJob que analiza todas las aplicaciones gestionadas por ArgoCD.
-
----
-
-## **Descripción**
-
-El CronJob verifica periódicamente el estado de las aplicaciones gestionadas por ArgoCD. Si alguna aplicación está en estado `degraded` o `error`, el script intenta sincronizarla hasta 5 veces. Si después de los intentos sigue fallando, la aplicación se pausa y se envía una notificación a Slack.
+This project includes a Flask application deployed with ArgoCD and a CronJob that monitors all applications managed by ArgoCD. The CronJob attempts to synchronize applications in a degraded or error state and sends Slack notifications if issues persist.
 
 ---
 
-## **Diagrama de Flujo**
+## **Description**
 
-El siguiente diagrama describe el flujo de trabajo del CronJob:
+- **Flask Application**: A simple Flask application deployed in Kubernetes and managed by ArgoCD.
+- **CronJob**: Periodically checks the health of applications managed by ArgoCD. If an application is in a `Degraded` or `Error` state, it attempts to synchronize it up to 5 times. If the issue persists, the application is paused, and a Slack notification is sent.
+
+---
+
+## **Project Structure**
 
 ```plaintext
-graph TD;
-    A[Inicio del CronJob] --> B[Obtener lista de aplicaciones de ArgoCD]
-    B -->|Aplicación en estado Healthy| C[Fin]
-    B -->|Aplicación en estado Degraded/Error| D[Intentar sincronización]
-    D -->|Sincronización exitosa| C
-    D -->|Sincronización fallida tras 5 intentos| E[Pausar aplicación]
-    E --> F[Enviar notificación a Slack]
-    F --> C
+opcion5-cronjob-python/
+├── app_flask/
+│   ├── main.py                # Flask application code
+│   ├── Dockerfile             # Dockerfile for Flask application
+│   ├── deployment.yaml        # Kubernetes Deployment for Flask application
+│   ├── service.yaml           # Kubernetes Service for Flask application
+│   └── application.yaml       # ArgoCD Application configuration for Flask
+├── cronjob/
+│   ├── deploy_script.py       # Python script for the CronJob
+│   ├── Dockerfile             # Dockerfile for the CronJob
+│   ├── cronjob.yaml           # Kubernetes CronJob configuration
+│   └── application.yaml       # ArgoCD Application configuration for CronJob
+├── .github/
+│   └── workflows/
+│       ├── flask-app-deploy.yml   # GitHub Actions workflow for Flask app
+│       └── cronjob-deploy.yml     # GitHub Actions workflow for CronJob
+├── .env                       # Environment variables (not committed to Git)
+├── .gitignore                 # Files ignored by Git
+└── README.md                  # Project documentation
+```
+Prerequisites
+Minikube: Ensure Minikube is installed and running.
+ArgoCD: Installed in the Kubernetes cluster.
+Slack Webhook: A valid Slack webhook URL for notifications.
+Docker Hub Account: For pushing Docker images.
+
+Setup Instructions
+```markdown
+minikube start
+kubectl config use-context minikube
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
+kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 --decode; echo
 ```
 
-## Archivos
+3. Build and Push Docker Images
+```markdown
+docker build -t <your-dockerhub-username>/flask-app:latest ./app_flask
+docker push <your-dockerhub-username>/flask-app:latest
+docker build -t <your-dockerhub-username>/deploy-script:latest ./cronjob
+docker push <your-dockerhub-username>/deploy-script:latest
+```
 
-- `deploy_script.py`: Script en Python que maneja los reintentos y notificaciones.
-- `Dockerfile`: Imagen base para ejecutar el script.
-- `cronjob.yaml`: Configuración del CronJob en Kubernetes.
-- `.env`: Archivo para almacenar configuraciones sensibles relacionadas con ArgoCD (no se sube al repositorio).
+4. Deploy Resources to Kubernetes
+```markdown
+kubectl apply -f app_flask/deployment.yaml
+kubectl apply -f app_flask/service.yaml
+kubectl apply -f app_flask/application.yaml
+kubectl apply --dry-run=client -f cronjob/cronjob.yaml
+kubectl apply -f cronjob/cronjob.yaml
+kubectl apply -f cronjob/application.yaml
+```
 
-## Requisitos Previos
+5. Verify Deployments
+```markdown
+kubectl get svc flask-service -n poc
+kubectl get cronjob deploy-checker -n argocd
+kubectl logs <pod-name> -n argocd
 
-1. **Minikube**: Asegúrate de que Minikube está instalado y corriendo en tu DevContainer.
-2. **ArgoCD**: Debe estar instalado en el clúster de Minikube.
-3. **Slack Webhook**: Necesitas un webhook de Slack para enviar notificaciones.
+GitHub Actions Workflows
+1. Flask Application Workflow
+File: .github/workflows/flask-app-deploy.yml
+Trigger: Executes on changes in the app_flask directory.
+Steps:
+Build and push the Docker image for the Flask application.
+2. CronJob Workflow
+File: .github/workflows/cronjob-deploy.yml
+Trigger: Executes on changes in the cronjob directory.
+Steps:
+Build and push the Docker image for the CronJob.
 
-## Notas para el Entorno DevContainer
+Environment Variables
+1. .env File
+The .env file contains sensitive information and should not be committed to Git. Example:
+```markdown
+ARGOCD_SERVER=localhost:8080
+ARGOCD_USERNAME=admin
+ARGOCD_PASSWORD=Thomas#1109
+ARTIFACT_NAME=microservice
+```
 
-- Este DevContainer incluye `kubectl`, Helm, y Minikube preinstalados y disponibles en el `PATH`.
-- Cuando configures Ingress o accedas a servicios en tu clúster, utiliza la IP del nodo de Kubernetes en lugar de `localhost`. Esto se debe a que Kubernetes, por defecto, se vincula a la IP de una interfaz específica en lugar de `localhost` o todas las interfaces.
-- Para obtener la IP del nodo de Minikube, ejecuta:
-  ```bash
-  minikube ip
-  ```
+Error Handling and Validations
+Flask Application
+Error Handling: The Flask application includes basic error handling for invalid routes.
+Validation: Ensure the Dockerfile and Kubernetes manifests are valid before deployment.
+CronJob
+Error Handling: The deploy_script.py includes error handling for failed synchronization attempts and Slack notification failures.
 
-## Pasos
-1. Inicia Minikube y configura el contexto:
-   ```bash
-   minikube start
-   kubectl config use-context minikube
-   ```
+Here is the updated and organized content for your project, including error handling, validations, and documentation for all files. The README.md has been rewritten and organized in English for clarity.
 
-2. Crea el namespace para ArgoCD:
+---
+
+## **Updated README.md**
+
+```markdown
+# Option 5: Kubernetes CronJob with Python Script and Flask Application
+
+This project includes a Flask application deployed with ArgoCD and a CronJob that monitors all applications managed by ArgoCD. The CronJob attempts to synchronize applications in a degraded or error state and sends Slack notifications if issues persist.
+
+---
+
+## **Description**
+
+- **Flask Application**: A simple Flask application deployed in Kubernetes and managed by ArgoCD.
+- **CronJob**: Periodically checks the health of applications managed by ArgoCD. If an application is in a `Degraded` or `Error` state, it attempts to synchronize it up to 5 times. If the issue persists, the application is paused, and a Slack notification is sent.
+
+---
+
+## **Project Structure**
+
+```plaintext
+opcion5-cronjob-python/
+├── app_flask/
+│   ├── main.py                # Flask application code
+│   ├── Dockerfile             # Dockerfile for Flask application
+│   ├── deployment.yaml        # Kubernetes Deployment for Flask application
+│   ├── service.yaml           # Kubernetes Service for Flask application
+│   └── application.yaml       # ArgoCD Application configuration for Flask
+├── cronjob/
+│   ├── deploy_script.py       # Python script for the CronJob
+│   ├── Dockerfile             # Dockerfile for the CronJob
+│   ├── cronjob.yaml           # Kubernetes CronJob configuration
+│   └── application.yaml       # ArgoCD Application configuration for CronJob
+├── .github/
+│   └── workflows/
+│       ├── flask-app-deploy.yml  # GitHub Actions workflow for Flask app
+│       └── cronjob-deploy.yml    # GitHub Actions workflow for CronJob
+├── .env                       # Environment variables (not committed to Git)
+├── .gitignore                 # Files ignored by Git
+└── README.md                  # Project documentation
+```
+
+---
+
+## **Prerequisites**
+
+1. **Minikube**: Ensure Minikube is installed and running.
+2. **ArgoCD**: Installed in the Kubernetes cluster.
+3. **Slack Webhook**: A valid Slack webhook URL for notifications.
+4. **Docker Hub Account**: For pushing Docker images.
+
+---
+
+## **Setup Instructions**
+
+### **1. Start Minikube**
+
+```bash
+minikube start
+kubectl config use-context minikube
+```
+
+### **2. Install ArgoCD**
+
+1. Create the `argocd` namespace:
    ```bash
    kubectl create namespace argocd
    ```
 
-3. Instala ArgoCD en el namespace argocd:
+2. Install ArgoCD:
    ```bash
    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
    ```
 
-4. Cambia el tipo de servicio de ArgoCD a NodePort:
+3. Expose the ArgoCD server:
    ```bash
    kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
    ```
 
-5. Obtén la contraseña inicial del administrador de ArgoCD:
+4. Retrieve the initial admin password:
    ```bash
    kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 --decode; echo
    ```
 
-6. Construye la imagen Docker:
+---
+
+### **3. Build and Push Docker Images**
+
+1. **Flask Application**:
    ```bash
-   docker build -t deploy-checker:latest .
-   docker build -t <your-dockerhub-username>/microservice:latest .
-   docker push <your-dockerhub-username>/microservice:latest
-   docker build -t <your-dockerhub-username>/deploy-script:latest cronjob/
+   docker build -t <your-dockerhub-username>/flask-app:latest ./app_flask
+   docker push <your-dockerhub-username>/flask-app:latest
+   ```
+
+2. **CronJob**:
+   ```bash
+   docker build -t <your-dockerhub-username>/deploy-script:latest ./cronjob
    docker push <your-dockerhub-username>/deploy-script:latest
    ```
 
-7. Aplica la configuración del CronJob:
-   ```bash
-   kubectl apply -f cronjob/cronjob.yaml
-   ```
+---
 
-8. Verifica el estado del CronJob:
-   ```bash
-   kubectl get cronjob -n argocd
-   ```
+### **4. Deploy Resources to Kubernetes**
 
-9. Verifica los pods y logs del job:
-   ```bash
-   kubectl get pods
-   kubectl logs <job-pod-name> -n argocd
-   ```
-
-10. Configura la aplicación en ArgoCD:
-   ```yaml
-   apiVersion: argoproj.io/v1alpha1
-   kind: Application
-   metadata:
-     name: microservice
-     namespace: argocd
-   spec:
-     project: default
-     source:
-       repoURL: https://github.com/<your-repo>/microservice.git
-       targetRevision: HEAD
-       path: .
-     destination:
-       server: https://kubernetes.default.svc
-       namespace: default
-     syncPolicy:
-       automated:
-         prune: true
-         selfHeal: true
-   ```
-
-11. Aplica la configuración de la aplicación:
-   ```bash
-   kubectl apply -f application.yaml
-   ```
-
-12. Aplica la configuración de la aplicación Flask:
+1. **Flask Application**:
    ```bash
    kubectl apply -f app_flask/deployment.yaml
    kubectl apply -f app_flask/service.yaml
    kubectl apply -f app_flask/application.yaml
    ```
 
-13. Verifica el servicio de la aplicación Flask:
+2. **CronJob**:
+   ```bash
+   kubectl apply -f cronjob/cronjob.yaml
+   kubectl apply -f cronjob/application.yaml
+   ```
+
+---
+
+### **5. Verify Deployments**
+
+1. **Check the Flask Service**:
    ```bash
    kubectl get svc flask-service -n poc
    ```
 
-14. Ejecuta el túnel de Minikube:
+2. **Check the CronJob**:
    ```bash
-   minikube tunnel
+   kubectl get cronjob deploy-checker -n argocd
    ```
 
-## Configuración
+3. **View Logs of CronJob Pods**:
+   ```bash
+   kubectl logs <pod-name> -n argocd
+   ```
 
-### 1. Crear el Archivo `.env`
+---
 
-Crea un archivo `.env` en el directorio del proyecto con el siguiente contenido:
+## **GitHub Actions Workflows**
+
+### **1. Flask Application Workflow**
+
+- **File**: `.github/workflows/flask-app-deploy.yml`
+- **Trigger**: Executes on changes in the `app_flask` directory.
+- **Steps**:
+  1. Build and push the Docker image for the Flask application.
+
+### **2. CronJob Workflow**
+
+- **File**: `.github/workflows/cronjob-deploy.yml`
+- **Trigger**: Executes on changes in the `cronjob` directory.
+- **Steps**:
+  1. Build and push the Docker image for the CronJob.
+
+---
+
+## **Environment Variables**
+
+### **1. `.env` File**
+
+The `.env` file contains sensitive information and should not be committed to Git. Example:
 
 ```plaintext
 ARGOCD_SERVER=localhost:8080
@@ -156,133 +274,64 @@ ARGOCD_PASSWORD=Thomas#1109
 ARTIFACT_NAME=microservice
 ```
 
-#### **`cronjob.yaml`**
-```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: deploy-checker
-  namespace: default
-spec:
-  schedule: "*/5 * * * *"
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: deploy-checker
-              image: <your-dockerhub-username>/deploy-script:latest
-          restartPolicy: OnFailure
+---
+
+## **Error Handling and Validations**
+
+### **Flask Application**
+
+- **Error Handling**: The Flask application includes basic error handling for invalid routes.
+- **Validation**: Ensure the `Dockerfile` and Kubernetes manifests are valid before deployment.
+
+### **CronJob**
+
+- **Error Handling**: The `deploy_script.py` includes error handling for failed synchronization attempts and Slack notification failures.
+- **Validation**: Validate the `cronjob.yaml` file using:
+  ```bash
+  kubectl apply --dry-run=client -f cronjob/cronjob.yaml
+  ```
+
+---
+
+## **Slack Notifications**
+
+The CronJob sends notifications to Slack using the webhook URL stored in the Kubernetes secret `slack-webhook-secret`. To create the secret:
+
+```bash
+kubectl create secret generic slack-webhook-secret \
+  --from-literal=SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..." \
+  -n argocd
 ```
 
-#### **`app.py`**
-```python
-from flask import Flask
+---
 
-app = Flask(__name__)
+## **Ingress Configuration**
 
-@app.route('/')
-def hello():
-    return "Hello, World!"
+If you want to expose the Flask application externally, configure an Ingress resource. Use the Minikube IP instead of `localhost`:
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+```bash
+minikube ip
 ```
 
-#### **`deploy_script.py`**
-```python
-import subprocess
-import time
-import requests
+---
 
-ARGOCD_SERVER = "http://<minikube-ip>:<node-port>"
-ARTIFACT_NAME = "microservice"
-SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/..."
+## **Conclusion**
 
-def check_health():
-    result = subprocess.run(
-        ["argocd", "app", "get", ARTIFACT_NAME, "--output", "json"],
-        capture_output=True,
-        text=True
-    )
-    return result.stdout
+With this setup, the Flask application and CronJob are managed by ArgoCD, ensuring that the repository is the single source of truth. GitHub Actions automates the build and push of Docker images, while ArgoCD handles synchronization and deployment.
 
-def deploy():
-    for attempt in range(5):
-        print(f"Intentando desplegar {ARTIFACT_NAME}, intento {attempt + 1}")
-        subprocess.run(["argocd", "app", "sync", ARTIFACT_NAME])
-        time.sleep(10)
-        health = check_health()
-        if "Healthy" in health:
-            print(f"{ARTIFACT_NAME} está healthy.")
-            return True
-    return False
+---
 
-def notify_slack(message):
-    requests.post(SLACK_WEBHOOK_URL, json={"text": message})
+### **Key Updates**
 
-if __name__ == "__main__":
-    if not deploy():
-        print(f"{ARTIFACT_NAME} sigue en estado degraded. Pausando...")
-        subprocess.run(["argocd", "app", "pause", ARTIFACT_NAME])
-        notify_slack(f"{ARTIFACT_NAME} está en estado degraded y ha sido pausado.")
-```
+1. **Error Handling**:
+   - Added error handling in  for Slack notifications and synchronization failures.
+   - Validated Kubernetes manifests using `kubectl apply --dry-run=client`.
 
-#### **`Dockerfile`**
-```dockerfile
-FROM python:3.9-slim
-WORKDIR /app
-COPY . .
-RUN pip install requests
-CMD ["python", "deploy_script.py"]
-```
+2. **Documentation**:
+   - Organized the  into clear sections.
+   - Added instructions for setting up Slack notifications and validating resources.
 
-1. Construir y subir la imagen Docker de la aplicación Flask:
-   ```bash
-   docker build -t <your-dockerhub-username>/flask-app:latest .
-   docker push <your-dockerhub-username>/flask-app:latest
-```
+3. **GitHub Actions**:
+   - Documented workflows for Flask and CronJob deployments.
 
-Con estos pasos, tendrás una aplicación Flask gestionada por ArgoCD y un CronJob que analiza todas las aplicaciones del clúster.
-
-## Estructura del Proyecto
-
-```plaintext
-opcion5-cronjob-python/
-├── app_flask/
-│   ├── main.py                # Código de la aplicación Flask
-│   ├── Dockerfile             # Dockerfile para la aplicación Flask
-│   ├── deployment.yaml        # Despliegue de la aplicación Flask en Kubernetes
-│   ├── service.yaml           # Servicio para exponer la aplicación Flask
-│   └── application.yaml       # Configuración de ArgoCD para la aplicación Flask
-├── cronjob/
-│   ├── deploy_script.py       # Script en Python para el CronJob
-│   ├── Dockerfile             # Dockerfile para el CronJob
-│   └── cronjob.yaml           # Configuración del CronJob en Kubernetes
-├── .env                       # Variables de entorno (no se sube al repositorio)
-├── .gitignore                 # Archivos ignorados por Git
-└── README.md                  # Documentación del proyecto
-```
-
-## Workflows de GitHub Actions
-
-Este repositorio incluye dos workflows para automatizar el despliegue de la aplicación Flask y el CronJob:
-
-1. **Deploy Flask App**:
-   - Ubicación: `.github/workflows/flask-app-deploy.yml`
-   - Se ejecuta automáticamente cuando se realizan cambios en el directorio `app_flask`.
-   - Pasos:
-     - Construye y sube la imagen Docker de la aplicación Flask.
-
-2. **Deploy CronJob**:
-   - Ubicación: `.github/workflows/cronjob-deploy.yml`
-   - Se ejecuta automáticamente cuando se realizan cambios en el directorio `cronjob`.
-   - Pasos:
-     - Construye y sube la imagen Docker del CronJob.
-
-### Configuración de Secretos
-
-Para que los workflows funcionen correctamente, asegúrate de configurar los siguientes secretos en GitHub:
-
-- **DOCKER_USERNAME_JAIME**: Tu nombre de usuario de Docker Hub.
-- **DOCKER_PASSWORD_JAIME**: Tu contraseña de Docker Hub.
+This updated structure ensures clarity, error handling, and proper documentation for the project. Let me know if you need further adjustments!
