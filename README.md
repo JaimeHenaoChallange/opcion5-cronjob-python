@@ -37,6 +37,190 @@ opcion5-cronjob-python/
 
 ---
 
+## **Code Files**
+
+### **1. Flask Application**
+
+#### `main.py`
+```python
+# filepath: /workspaces/monitor-3/opcion5-cronjob-python/app_flask/main.py
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Hello, Flask Application!"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+```
+
+#### `Dockerfile`
+```dockerfile
+# filepath: /workspaces/monitor-3/opcion5-cronjob-python/app_flask/Dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+
+COPY . .
+
+CMD ["python", "main.py"]
+```
+
+#### `deployment.yaml`
+```yaml
+# filepath: /workspaces/monitor-3/opcion5-cronjob-python/app_flask/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  namespace: poc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-app
+        image: <your-dockerhub-username>/flask-app:latest
+        ports:
+        - containerPort: 5000
+```
+
+#### `service.yaml`
+```yaml
+# filepath: /workspaces/monitor-3/opcion5-cronjob-python/app_flask/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+  namespace: poc
+spec:
+  selector:
+    app: flask-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: NodePort
+```
+
+---
+
+### **2. CronJob**
+
+#### `deploy_script.py`
+```python
+# filepath: /workspaces/monitor-3/opcion5-cronjob-python/cronjob/deploy_script.py
+import requests
+
+def check_health():
+    # Logic to check application health
+    print("Checking application health...")
+
+def send_slack_notification(message):
+    # Logic to send Slack notification
+    print(f"Sending Slack notification: {message}")
+
+if __name__ == "__main__":
+    check_health()
+    send_slack_notification("Health check completed.")
+```
+
+#### `Dockerfile`
+```dockerfile
+# filepath: /workspaces/monitor-3/opcion5-cronjob-python/cronjob/Dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+
+COPY . .
+
+CMD ["python", "deploy_script.py"]
+```
+
+#### `cronjob.yaml`
+```yaml
+# filepath: /workspaces/monitor-3/opcion5-cronjob-python/cronjob/cronjob.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: deploy-checker
+  namespace: argocd
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: deploy-checker
+            image: <your-dockerhub-username>/deploy-script:latest
+          restartPolicy: OnFailure
+```
+
+---
+
+### **3. GitHub Actions Workflows**
+
+#### `flask-app-deploy.yml`
+```yaml
+# filepath: /workspaces/monitor-3/opcion5-cronjob-python/.github/workflows/flask-app-deploy.yml
+name: Deploy Flask App
+
+on:
+  push:
+    paths:
+      - "app_flask/**"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Build and push Docker image
+      run: |
+        docker build -t <your-dockerhub-username>/flask-app:latest ./app_flask
+        docker push <your-dockerhub-username>/flask-app:latest
+```
+
+#### `cronjob-deploy.yml`
+```yaml
+# filepath: /workspaces/monitor-3/opcion5-cronjob-python/.github/workflows/cronjob-deploy.yml
+name: Deploy CronJob
+
+on:
+  push:
+    paths:
+      - "cronjob/**"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Build and push Docker image
+      run: |
+        docker build -t <your-dockerhub-username>/deploy-script:latest ./cronjob
+        docker push <your-dockerhub-username>/deploy-script:latest
+```
+
+---
+
 ## **Prerequisites**
 
 1. **Minikube**: Ensure Minikube is installed and running.
@@ -173,24 +357,6 @@ flowchart TD
     J --> K[Slack Notifications]
     K --> L[End]
 ```
-
----
-
-## **GitHub Actions Workflows**
-
-### **1. Flask Application Workflow**
-
-- **File**: `.github/workflows/flask-app-deploy.yml`
-- **Trigger**: Executes on changes in the `app_flask` directory.
-- **Steps**:
-  1. Build and push the Docker image for the Flask application.
-
-### **2. CronJob Workflow**
-
-- **File**: `.github/workflows/cronjob-deploy.yml`
-- **Trigger**: Executes on changes in the `cronjob` directory.
-- **Steps**:
-  1. Build and push the Docker image for the CronJob.
 
 ---
 
