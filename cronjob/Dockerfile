@@ -10,7 +10,6 @@ COPY deploy_script.py /app/deploy_script.py
 # Instala dependencias si es necesario (descomenta si tienes un requirements.txt)
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
-RUN pip install requests
 
 # Define el comando predeterminado para ejecutar el script
 CMD ["python", "/app/deploy_script.py"]
