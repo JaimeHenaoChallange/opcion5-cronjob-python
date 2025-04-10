@@ -85,6 +85,20 @@ def notify_slack(message):
     except requests.RequestException as e:
         logging.error(f"Error al enviar notificación a Slack: {e}")
 
+def pause_application(app_name):
+    try:
+        subprocess.run(["argocd", "app", "pause", app_name], check=True)
+        logging.info(f"Aplicación {app_name} pausada.")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error al pausar la aplicación {app_name}: {e}")
+
+def resume_application(app_name):
+    try:
+        subprocess.run(["argocd", "app", "resume", app_name], check=True)
+        logging.info(f"Aplicación {app_name} reanudada.")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error al reanudar la aplicación {app_name}: {e}")
+
 if __name__ == "__main__":
     try:
         apps = get_applications()
@@ -95,7 +109,10 @@ if __name__ == "__main__":
                 logging.info(f"Analizando aplicación: {app_name}")
                 if not deploy(app_name):
                     logging.warning(f"{app_name} sigue en estado {app_status}. Pausando...")
-                    subprocess.run(["argocd", "app", "pause", app_name], check=True)
+                    pause_application(app_name)
                     notify_slack(f"{app_name} está en estado {app_status} y ha sido pausado.")
+            elif app_status == "Paused":
+                logging.info(f"Reanudando aplicación pausada: {app_name}")
+                resume_application(app_name)
     except Exception as e:
         logging.error(f"Error en el script: {e}")

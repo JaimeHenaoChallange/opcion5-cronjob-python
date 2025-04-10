@@ -8,7 +8,6 @@ on:
       - 'cronjob/**' # Solo se ejecuta si hay cambios en el directorio cronjob
       - '!README.md'
 
-
 env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME_JAIME }}
   DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD_JAIME }}
