@@ -4,7 +4,7 @@ metadata:
   name: flask-app
   namespace: argocd
 spec:
-  project: default
+  project: poc
   source:
     repoURL: https://github.com/JaimeHenaoChallange/opcion5-cronjob-python.git
     targetRevision: HEAD
