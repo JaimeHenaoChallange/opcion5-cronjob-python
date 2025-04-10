@@ -238,8 +238,16 @@ The CronJob sends notifications to Slack using the webhook URL stored in the Kub
 
 ```bash
 kubectl create secret generic slack-webhook-secret \
-  --from-literal=SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..." \
+  --from-literal=SLACK_WEBHOOK_URL="https://hooks.slack.com/services/your/webhook/url" \
   -n argocd
+```
+
+Replace `https://hooks.slack.com/services/your/webhook/url` with your actual Slack webhook URL.
+
+Verify the secret:
+
+```bash
+kubectl get secret slack-webhook-secret -n argocd
 ```
 
 ---
