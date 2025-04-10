@@ -2,9 +2,19 @@ import subprocess
 import time
 import requests
 import os
+import logging
 from dotenv import load_dotenv
 import kubernetes.client
 import kubernetes.config
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
 
 # Cargar variables desde el archivo .env
 load_dotenv()
@@ -15,51 +25,77 @@ ARGOCD_PASSWORD = os.getenv("ARGOCD_PASSWORD")
 
 # Cargar el secreto de Kubernetes para el Slack Webhook
 def get_slack_webhook():
-    kubernetes.config.load_incluster_config()
-    v1 = kubernetes.client.CoreV1Api()
-    secret = v1.read_namespaced_secret("slack-webhook-secret", "argocd")
-    return secret.data["SLACK_WEBHOOK_URL"]
+    try:
+        kubernetes.config.load_incluster_config()
+        v1 = kubernetes.client.CoreV1Api()
+        secret = v1.read_namespaced_secret("slack-webhook-secret", "argocd")
+        return secret.data["SLACK_WEBHOOK_URL"]
+    except Exception as e:
+        logging.error(f"Error al obtener el Slack Webhook: {e}")
+        raise
 
 SLACK_WEBHOOK_URL = get_slack_webhook()
 
 def get_applications():
-    result = subprocess.run(
-        ["argocd", "app", "list", "--output", "json"],
-        capture_output=True,
-        text=True
-    )
-    return result.stdout
+    try:
+        result = subprocess.run(
+            ["argocd", "app", "list", "--output", "json"],
+            capture_output=True,
+            text=True
+        )
+        result.check_returncode()
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error al obtener aplicaciones: {e}")
+        raise
 
 def check_health(app_name):
-    result = subprocess.run(
-        ["argocd", "app", "get", app_name, "--output", "json"],
-        capture_output=True,
-        text=True
-    )
-    return result.stdout
+    try:
+        result = subprocess.run(
+            ["argocd", "app", "get", app_name, "--output", "json"],
+            capture_output=True,
+            text=True
+        )
+        result.check_returncode()
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error al verificar la salud de {app_name}: {e}")
+        raise
 
 def deploy(app_name):
     for attempt in range(5):
-        print(f"Intentando desplegar {app_name}, intento {attempt + 1}")
-        subprocess.run(["argocd", "app", "sync", app_name])
-        time.sleep(10)
-        health = check_health(app_name)
-        if "Healthy" in health:
-            print(f"{app_name} está healthy.")
-            return True
+        logging.info(f"Intentando desplegar {app_name}, intento {attempt + 1}")
+        try:
+            subprocess.run(["argocd", "app", "sync", app_name], check=True)
+            time.sleep(10)
+            health = check_health(app_name)
+            if "Healthy" in health:
+                logging.info(f"{app_name} está healthy.")
+                return True
+        except subprocess.CalledProcessError as e:
+            logging.warning(f"Error al sincronizar {app_name}: {e}")
+    logging.error(f"No se pudo desplegar {app_name} después de 5 intentos.")
     return False
 
 def notify_slack(message):
-    requests.post(SLACK_WEBHOOK_URL, json={"text": message})
+    try:
+        response = requests.post(SLACK_WEBHOOK_URL, json={"text": message})
+        response.raise_for_status()
+        logging.info(f"Notificación enviada a Slack: {message}")
+    except requests.RequestException as e:
+        logging.error(f"Error al enviar notificación a Slack: {e}")
 
 if __name__ == "__main__":
-    apps = get_applications()
-    for app in apps:
-        app_name = app["name"]
-        app_status = app["status"]
-        if app_status in ["OutOfSync", "Degraded", "Error"]:
-            print(f"Analizando aplicación: {app_name}")
-            if not deploy(app_name):
-                print(f"{app_name} sigue en estado {app_status}. Pausando...")
-                subprocess.run(["argocd", "app", "pause", app_name])
-                notify_slack(f"{app_name} está en estado {app_status} y ha sido pausado.")
+    try:
+        apps = get_applications()
+        for app in apps:
+            app_name = app["name"]
+            app_status = app["status"]
+            if app_status in ["OutOfSync", "Degraded", "Error"]:
+                logging.info(f"Analizando aplicación: {app_name}")
+                if not deploy(app_name):
+                    logging.warning(f"{app_name} sigue en estado {app_status}. Pausando...")
+                    subprocess.run(["argocd", "app", "pause", app_name], check=True)
+                    notify_slack(f"{app_name} está en estado {app_status} y ha sido pausado.")
+    except Exception as e:
+        logging.error(f"Error en el script: {e}")
