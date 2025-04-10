@@ -1,5 +1,15 @@
+# Usa una imagen base de Python
 FROM python:3.9-slim
+
+# Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
-COPY . .
-RUN pip install requests python-dotenv kubernetes
-CMD ["python", "deploy_script.py"]
+
+# Copia el script Python al contenedor
+COPY deploy_script.py /app/deploy_script.py
+
+# Instala dependencias si es necesario (descomenta si tienes un requirements.txt)
+# COPY requirements.txt /app/requirements.txt
+# RUN pip install -r requirements.txt
+
+# Define el comando predeterminado para ejecutar el script
+CMD ["python", "/app/deploy_script.py"]
