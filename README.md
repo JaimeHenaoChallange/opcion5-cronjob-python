@@ -37,187 +37,27 @@ opcion5-cronjob-python/
 
 ---
 
-## **Code Files**
+## **File Guide**
 
 ### **1. Flask Application**
 
-#### `main.py`
-```python
-# filepath: /workspaces/monitor-3/opcion5-cronjob-python/app_flask/main.py
-from flask import Flask
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "Hello, Flask Application!"
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-```
-
-#### `Dockerfile`
-```dockerfile
-# filepath: /workspaces/monitor-3/opcion5-cronjob-python/app_flask/Dockerfile
-FROM python:3.9-slim
-
-WORKDIR /app
-
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
-
-COPY . .
-
-CMD ["python", "main.py"]
-```
-
-#### `deployment.yaml`
-```yaml
-# filepath: /workspaces/monitor-3/opcion5-cronjob-python/app_flask/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: flask-app
-  namespace: poc
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: flask-app
-  template:
-    metadata:
-      labels:
-        app: flask-app
-    spec:
-      containers:
-      - name: flask-app
-        image: <your-dockerhub-username>/flask-app:latest
-        ports:
-        - containerPort: 5000
-```
-
-#### `service.yaml`
-```yaml
-# filepath: /workspaces/monitor-3/opcion5-cronjob-python/app_flask/service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: flask-service
-  namespace: poc
-spec:
-  selector:
-    app: flask-app
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 5000
-  type: NodePort
-```
-
----
+- **`main.py`**: Contains the Flask application code with a simple route returning a greeting message.
+- **`Dockerfile`**: Defines the container image for the Flask application.
+- **`deployment.yaml`**: Kubernetes Deployment manifest for deploying the Flask application.
+- **`service.yaml`**: Kubernetes Service manifest to expose the Flask application.
+- **`application.yaml`**: ArgoCD Application configuration for managing the Flask application.
 
 ### **2. CronJob**
 
-#### `deploy_script.py`
-```python
-# filepath: /workspaces/monitor-3/opcion5-cronjob-python/cronjob/deploy_script.py
-import requests
-
-def check_health():
-    # Logic to check application health
-    print("Checking application health...")
-
-def send_slack_notification(message):
-    # Logic to send Slack notification
-    print(f"Sending Slack notification: {message}")
-
-if __name__ == "__main__":
-    check_health()
-    send_slack_notification("Health check completed.")
-```
-
-#### `Dockerfile`
-```dockerfile
-# filepath: /workspaces/monitor-3/opcion5-cronjob-python/cronjob/Dockerfile
-FROM python:3.9-slim
-
-WORKDIR /app
-
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
-
-COPY . .
-
-CMD ["python", "deploy_script.py"]
-```
-
-#### `cronjob.yaml`
-```yaml
-# filepath: /workspaces/monitor-3/opcion5-cronjob-python/cronjob/cronjob.yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: deploy-checker
-  namespace: argocd
-spec:
-  schedule: "*/5 * * * *"
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-          - name: deploy-checker
-            image: <your-dockerhub-username>/deploy-script:latest
-          restartPolicy: OnFailure
-```
-
----
+- **`deploy_script.py`**: Python script executed by the CronJob to monitor and synchronize ArgoCD applications.
+- **`Dockerfile`**: Defines the container image for the CronJob.
+- **`cronjob.yaml`**: Kubernetes CronJob manifest for scheduling the `deploy_script.py`.
+- **`application.yaml`**: ArgoCD Application configuration for managing the CronJob.
 
 ### **3. GitHub Actions Workflows**
 
-#### `flask-app-deploy.yml`
-```yaml
-# filepath: /workspaces/monitor-3/opcion5-cronjob-python/.github/workflows/flask-app-deploy.yml
-name: Deploy Flask App
-
-on:
-  push:
-    paths:
-      - "app_flask/**"
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Build and push Docker image
-      run: |
-        docker build -t <your-dockerhub-username>/flask-app:latest ./app_flask
-        docker push <your-dockerhub-username>/flask-app:latest
-```
-
-#### `cronjob-deploy.yml`
-```yaml
-# filepath: /workspaces/monitor-3/opcion5-cronjob-python/.github/workflows/cronjob-deploy.yml
-name: Deploy CronJob
-
-on:
-  push:
-    paths:
-      - "cronjob/**"
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Build and push Docker image
-      run: |
-        docker build -t <your-dockerhub-username>/deploy-script:latest ./cronjob
-        docker push <your-dockerhub-username>/deploy-script:latest
-```
+- **`flask-app-deploy.yml`**: Automates the build and push of the Flask application Docker image.
+- **`cronjob-deploy.yml`**: Automates the build and push of the CronJob Docker image.
 
 ---
 
@@ -400,16 +240,6 @@ The CronJob sends notifications to Slack using the webhook URL stored in the Kub
 kubectl create secret generic slack-webhook-secret \
   --from-literal=SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..." \
   -n argocd
-```
-
----
-
-## **Ingress Configuration**
-
-If you want to expose the Flask application externally, configure an Ingress resource. Use the Minikube IP instead of `localhost`:
-
-```bash
-minikube ip
 ```
 
 ---
