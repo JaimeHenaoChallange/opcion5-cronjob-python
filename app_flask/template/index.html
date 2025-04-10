@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Figuras Geométricas con Flask</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Crear Figura Geométrica</h1>
+    <form method="POST">
+        <label for="shape">Figura:</label>
+        <select name="shape" id="shape">
+            <option value="circle">Círculo</option>
+            <option value="square">Cuadrado</option>
+            <option value="triangle">Triángulo</option>
+        </select>
+        <br><br>
+        <label for="size">Tamaño (px):</label>
+        <input type="number" name="size" id="size" value="100">
+        <br><br>
+        <label for="color">Color:</label>
+        <input type="color" name="color" id="color" value="#3498db">
+        <br><br>
+        <button type="submit">Generar</button>
+    </form>
+
+    {% if shape %}
+        <h2>Figura Generada:</h2>
+        <div class="{{ shape }}" style="--size: {{ size }}px; --color: {{ color }};"></div>
+    {% endif %}
+</body>
+</html>
