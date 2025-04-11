@@ -7,14 +7,9 @@ WORKDIR /app
 # Copia todos los archivos Python desde la carpeta script-py al contenedor
 COPY script-py/*.py /app/
 
-# # Copia el archivo requirements.txt e instala las dependencias
-# COPY requirements.txt /app/requirements.txt
-# RUN pip install -r /app/requirements.txt
-
-# Install Python dependencies and clean up build dependencies
-RUN pip install --no-cache-dir -r requirements.txt && \
-    apt-get purge -y --auto-remove && \
-    rm -rf /var/lib/apt/lists/*
+# Copia el archivo requirements.txt e instala las dependencias
+COPY requirements.txt /app/requirements.txt
+RUN pip install -r /app/requirements.txt
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
