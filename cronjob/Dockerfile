@@ -4,8 +4,9 @@ FROM python:3.9-slim
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copia todos los archivos Python desde la carpeta script-py al contenedor
-COPY script_py/*.py /app/
+# Copia todos los archivos Python desde la carpeta script_py al contenedor
+COPY script_py/*.py /app/script_py/
+COPY script_py/__init__.py /app/script_py/
 
 # Copia el archivo requirements.txt e instala las dependencias
 COPY requirements.txt /app/requirements.txt
@@ -13,6 +14,7 @@ RUN pip install -r /app/requirements.txt
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app  # Agregar /app al PYTHONPATH
 
 # Instala el CLI de ArgoCD
 RUN apt-get update && apt-get install -y curl && \
