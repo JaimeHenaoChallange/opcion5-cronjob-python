@@ -1,10 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-monitor-config
+  namespace: poc
+data:
+  ARGOCD_API: "https://argocd-server.argocd.svc.cluster.local/api/v1"
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argocd-monitor-sa
+  namespace: poc
+
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: deploy-checker
-  namespace: argocd
+  name: argocd-monitor
+  namespace: poc
 spec:
-  schedule: "*/2 * * * *"  # Ejecuta cada 2 minutos
+  schedule: "*/5 * * * *"  # Ejecuta cada 5 minutos
   concurrencyPolicy: Forbid  # No permite que se ejecute un nuevo Job si ya hay uno en ejecución
   successfulJobsHistoryLimit: 1  # Retiene solo 1 Job exitoso
   failedJobsHistoryLimit: 1  # Retiene solo 1 Job fallido
@@ -12,45 +28,24 @@ spec:
     spec:
       template:
         spec:
-          initContainers:
-            - name: get-minikube-ip
-              image: jaimehenao8126/opcion5-deploy-script:faf54a402b3f61be2718135f0abcfc2613ea63dc
-              command: ["sh", "-c"]
-              args:
-                - |
-                  minikube_ip=$(minikube ip) && echo -n $minikube_ip > /etc/minikube-ip/minikube_ip
-              volumeMounts:
-                - name: minikube-ip
-                  mountPath: /etc/minikube-ip
+          serviceAccountName: argocd-monitor-sa
           containers:
-            - name: deploy-checker
-              image: jaimehenao8126/opcion5-deploy-script:faf54a402b3f61be2718135f0abcfc2613ea63dc
+            - name: argocd-monitor
+              image: jaimehenao8126/argocd-monitor:c949311d1888a1bee6696f4da117e384c660a72d
               env:
-                - name: ARGOCD_SERVER
-                  valueFrom:
-                    configMapKeyRef:
-                      name: minikube-ip-config
-                      key: ip
-                - name: ARGOCD_USERNAME
-                  value: "admin"
-                - name: ARGOCD_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: argocd-secret
-                      key: admin.password
-                - name: ARGOCD_API
-                  value: "https://$(MINIKUBE_IP):8080/api/v1"  # Replace with the correct API URL
-                - name: ARGOCD_TOKEN
-                  valueFrom:
-                    secretKeyRef:
-                      name: argocd-token-secret
-                      key: token  # Ensure this secret exists
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
                       name: slack-webhook-secret
                       key: SLACK_WEBHOOK_URL
+              envFrom:
+                - configMapRef:
+                    name: argocd-monitor-config
+              resources:
+                limits:
+                  memory: "256Mi"
+                  cpu: "500m"
+                requests:
+                  memory: "128Mi"
+                  cpu: "250m"
           restartPolicy: OnFailure
-          volumes:
-            - name: minikube-ip
-              emptyDir: {}

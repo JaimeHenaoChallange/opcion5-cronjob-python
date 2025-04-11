@@ -47,6 +47,9 @@ opcion5-cronjob-python/
 │   ├── role.yaml              # Role for accessing secrets
 │   ├── rolebinding.yaml       # RoleBinding for accessing secrets
 │   └── application.yaml       # ArgoCD Application configuration for CronJob
+├── cronjob-test/
+│   ├── cronjob-test.yaml      # Test CronJob configuration
+│   └── application.yaml       # ArgoCD Application configuration for the test CronJob
 ├── .github/
 │   └── workflows/
 │       ├── flask-app-deploy.yml  # GitHub Actions workflow for Flask app
@@ -142,6 +145,12 @@ opcion5-cronjob-python/
    kubectl apply -f cronjob/application.yaml
    ```
 
+3. **Test CronJob**:
+   ```bash
+   kubectl apply -f cronjob-test/cronjob-test.yaml
+   kubectl apply -f cronjob-test/application.yaml
+   ```
+
 ---
 
 ### **5. Verify Deployments**
@@ -153,12 +162,12 @@ opcion5-cronjob-python/
 
 2. **Check the CronJob**:
    ```bash
-   kubectl get cronjob deploy-checker -n argocd
+   kubectl get cronjob argocd-monitor -n poc
    ```
 
 3. **View Logs of CronJob Pods**:
    ```bash
-   kubectl logs <pod-name> -n argocd
+   kubectl logs <pod-name> -n poc
    ```
 
 ---
