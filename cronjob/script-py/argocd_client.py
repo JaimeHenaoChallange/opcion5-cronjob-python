@@ -3,13 +3,22 @@ import logging
 
 class ArgoCDClient:
     @staticmethod
-    def login(server, token):
+    def login(server, token=None, username=None, password=None):
         try:
-            # Usar solo la dirección del servidor y el puerto
-            subprocess.run(
-                ["argocd", "login", server, "--auth-token", token, "--insecure"],
-                check=True
-            )
+            if token:
+                # Usar token de autenticación
+                subprocess.run(
+                    ["argocd", "login", server, "--auth-token", token, "--insecure"],
+                    check=True
+                )
+            elif username and password:
+                # Usar nombre de usuario y contraseña
+                subprocess.run(
+                    ["argocd", "login", server, "--username", username, "--password", password, "--insecure"],
+                    check=True
+                )
+            else:
+                raise ValueError("Se requiere un token o un nombre de usuario y contraseña para autenticar.")
             logging.info(f"Conexión exitosa al servidor ArgoCD: {server}")
         except subprocess.CalledProcessError as e:
             logging.error(f"Error al autenticar en ArgoCD: {e}")

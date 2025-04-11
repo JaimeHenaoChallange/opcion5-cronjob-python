@@ -1,6 +1,6 @@
 import time
 import logging
-import subprocess  # Importar subprocess
+import subprocess
 from argocd_client import ArgoCDClient
 from slack_notifier import SlackNotifier
 from config import Config
@@ -15,7 +15,11 @@ def main():
     try:
         Config.validate()
         logging.info("Todas las variables de entorno requeridas están configuradas.")
-        ArgoCDClient.login(Config.ARGOCD_API, Config.ARGOCD_TOKEN)  # Llamar al método login
+        if Config.ARGOCD_TOKEN:
+            ArgoCDClient.login(Config.ARGOCD_API, token=Config.ARGOCD_TOKEN)
+        else:
+            logging.error("No se proporcionó un token de autenticación.")
+            raise ValueError("Se requiere un token de autenticación para iniciar sesión en ArgoCD.")
     except ValueError as e:
         logging.error(f"Error de configuración: {e}")
         raise
