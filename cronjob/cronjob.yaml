@@ -4,8 +4,10 @@ metadata:
   name: deploy-checker
   namespace: argocd
 spec:
-  schedule: "*/2 * * * *"  # Ejecuta cada 5 minutos
+  schedule: "*/2 * * * *"  # Ejecuta cada 2 minutos
   concurrencyPolicy: Forbid  # No permite que se ejecute un nuevo Job si ya hay uno en ejecución
+  successfulJobsHistoryLimit: 1  # Retiene solo 1 Job exitoso
+  failedJobsHistoryLimit: 1  # Retiene solo 1 Job fallido
   jobTemplate:
     spec:
       template:
@@ -24,6 +26,6 @@ spec:
                 - name: ARGOCD_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: argocd-secret  # Se mantiene el secreto correcto
-                      key: admin.password  # Cambiado para usar la clave correcta
+                      name: argocd-secret
+                      key: admin.password
           restartPolicy: OnFailure
