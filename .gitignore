@@ -1,3 +1,11 @@
+# Ignorar entornos virtuales
+venv/
+poc/bin/
+
+# Ignorar el directorio "poc"
+poc/
+Backup/
+
 # Ignorar archivos de configuración sensibles
 .env
 

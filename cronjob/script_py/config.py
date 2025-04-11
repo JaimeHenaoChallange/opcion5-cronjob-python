@@ -1,10 +1,13 @@
 import os
+import yaml
 from dotenv import load_dotenv
 
 # Cargar las variables desde el archivo .env
 load_dotenv()
 
 class Config:
+    CONFIG_FILE = "/workspaces/monitor-3.1/opcion5-cronjob-python/cronjob/config.yaml"
+
     try:
         ARGOCD_API = os.getenv("ARGOCD_API", "https://localhost:8080/api/v1")
         ARGOCD_TOKEN = os.getenv("ARGOCD_TOKEN")
@@ -24,3 +27,10 @@ class Config:
     except Exception as e:
         print(f"❌ Error al cargar la configuración: {e}")
         raise
+
+    @staticmethod
+    def load():
+        with open(Config.CONFIG_FILE, "r") as file:
+            return yaml.safe_load(file)
+
+CONFIG = Config.load()

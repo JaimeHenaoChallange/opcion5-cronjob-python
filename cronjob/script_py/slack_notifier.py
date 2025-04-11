@@ -12,13 +12,10 @@ class SlackNotifier:
                     "text": {
                         "type": "mrkdwn",
                         "text": (
-                            f"```\n"
-                            f"{'Aplicación':<20} {'Estado':<15} {'Intentos':<10}\n"
-                            f"{'-' * 50}\n"
-                            f"{app_name:<20} {status:<15} {attempts:<10}\n"
-                            f"{'-' * 50}\n"
-                            f"{action}\n"
-                            f"```"
+                            f"*Aplicación:* `{app_name}`\n"
+                            f"*Estado:* `{status}`\n"
+                            f"*Intentos:* `{attempts}`\n"
+                            f"*Acción:* {action}\n"
                         )
                     }
                 }

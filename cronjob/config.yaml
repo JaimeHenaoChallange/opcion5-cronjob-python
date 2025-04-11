@@ -1,0 +1,6 @@
+argocd_api: "http://argocd-server.argocd.svc.cluster.local/api/v1"
+excluded_apps:
+  - argocd-monitor
+  - cronjob-deploy-checker
+  - cronjob-hello-world
+max_sync_attempts: 3

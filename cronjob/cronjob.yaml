@@ -21,7 +21,7 @@ metadata:
   name: argocd-monitor
   namespace: poc
 spec:
-  schedule: "*/1 * * * *"  # Ejecuta cada minuto
+  schedule: "*/10 * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1

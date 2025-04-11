@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s  # Intervalo de recolección de métricas
+
+scrape_configs:
+  - job_name: "cronjob-monitor"
+    static_configs:
+      - targets: ["localhost:8000"]  # Puerto donde se exponen las métricas del script
