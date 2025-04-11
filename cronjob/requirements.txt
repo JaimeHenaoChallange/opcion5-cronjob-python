@@ -1,4 +1,5 @@
 requests
 python-dotenv
 kubernetes
+PyYAML
 # ...other dependencies...
