@@ -4,8 +4,8 @@ metadata:
   name: argocd-monitor-config
   namespace: poc
 data:
-  ARGOCD_API: "localhost:8080"  # Usar localhost:8080
-  ARGOCD_USERNAME: "admin"      # Nombre de usuario de ArgoCD
+  ARGOCD_API: "http://localhost:8080"  # Asegurar que incluya http://
+  ARGOCD_USERNAME: "admin"            # Nombre de usuario de ArgoCD
 
 ---
 apiVersion: v1

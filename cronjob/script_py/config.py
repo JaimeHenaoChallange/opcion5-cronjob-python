@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    ARGOCD_API = os.getenv("ARGOCD_API", "https://localhost:8080/api/v1")
+    ARGOCD_API = os.getenv("ARGOCD_API", "http://localhost:8080/api/v1")  # Asegurar que incluya http://
     ARGOCD_TOKEN = os.getenv("ARGOCD_TOKEN")
     SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 
