@@ -15,6 +15,14 @@ class ArgoCDClient:
             return eval(result.stdout)  # Convierte el JSON a un diccionario
         except subprocess.CalledProcessError as e:
             logging.error(f"Error al obtener aplicaciones de ArgoCD: {e}")
+            logging.error(f"Salida estándar: {e.stdout}")
+            logging.error(f"Error estándar: {e.stderr}")
+            raise
+        except FileNotFoundError:
+            logging.error("El comando 'argocd' no está disponible. Asegúrate de que el CLI de ArgoCD esté instalado.")
+            raise
+        except Exception as e:
+            logging.error(f"Error inesperado al obtener aplicaciones de ArgoCD: {e}")
             raise
 
     @staticmethod
