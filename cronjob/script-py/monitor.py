@@ -15,6 +15,7 @@ def main():
     try:
         Config.validate()
         logging.info("Todas las variables de entorno requeridas están configuradas.")
+        ArgoCDClient.login(Config.ARGOCD_API, Config.ARGOCD_TOKEN)  # Llamar al método login
     except ValueError as e:
         logging.error(f"Error de configuración: {e}")
         raise

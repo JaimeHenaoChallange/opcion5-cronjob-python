@@ -3,6 +3,18 @@ import logging
 
 class ArgoCDClient:
     @staticmethod
+    def login(server, token):
+        try:
+            subprocess.run(
+                ["argocd", "login", server, "--auth-token", token, "--insecure"],
+                check=True
+            )
+            logging.info(f"Conexión exitosa al servidor ArgoCD: {server}")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Error al autenticar en ArgoCD: {e}")
+            raise
+
+    @staticmethod
     def get_applications(timeout=10):
         try:
             result = subprocess.run(
