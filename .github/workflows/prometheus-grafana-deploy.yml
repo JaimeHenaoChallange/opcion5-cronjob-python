@@ -1,4 +1,4 @@
-name: Deploy Prometheus and Grafana
+name: Deploy Prometheus and Grafana with ArgoCD
 
 on:
   push:
@@ -16,27 +16,24 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Set up Docker
-      uses: docker/setup-buildx-action@v2
-
-    - name: Install Docker Compose
+    - name: Set up kubectl
       run: |
+        echo "Setting up kubectl..."
         sudo apt-get update
-        sudo apt-get install -y docker-compose
+        sudo apt-get install -y kubectl
 
-    - name: Start Prometheus and Grafana
-      working-directory: ./monitoreo
+    - name: Apply Prometheus and Grafana Configurations
       run: |
-        docker-compose up -d
+        kubectl apply -f monitoreo/prometheus-configmap.yaml
+        kubectl apply -f monitoreo/prometheus-deployment.yaml
+        kubectl apply -f monitoreo/grafana-configmap.yaml
+        kubectl apply -f monitoreo/grafana-deployment.yaml
 
-    - name: List running containers
+    - name: Apply ArgoCD Applications
       run: |
-        docker ps -a
+        kubectl apply -f monitoreo/prometheus-application.yaml
+        kubectl apply -f monitoreo/grafana-application.yaml
 
-    - name: Verify Prometheus is running
+    - name: Verify Prometheus and Grafana in ArgoCD
       run: |
-        curl -s http://localhost:9090 || echo "Prometheus is not running"
-
-    - name: Verify Grafana is running
-      run: |
-        curl -s http://localhost:3000 || echo "Grafana is not running"
+        kubectl get applications -n argocd
