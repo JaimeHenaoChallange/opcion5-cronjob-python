@@ -5,7 +5,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Copia todos los archivos Python desde la carpeta script-py al contenedor
-COPY script-py/*.py /app/
+COPY script_py/*.py /app/
 
 # Copia el archivo requirements.txt e instala las dependencias
 COPY requirements.txt /app/requirements.txt
