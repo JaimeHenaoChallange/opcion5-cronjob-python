@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    CONFIG_FILE = "/workspaces/monitor-3.1/opcion5-cronjob-python/cronjob/config.yaml"
+    CONFIG_FILE = "/app/config.yaml"  # Actualiza la ruta al archivo config.yaml
 
     try:
         ARGOCD_API = os.getenv("ARGOCD_API", "https://localhost:8080/api/v1")

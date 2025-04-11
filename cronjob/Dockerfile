@@ -11,6 +11,9 @@ COPY script_py/__init__.py /app/script_py/
 # Copia el archivo monitor.py al directorio raíz del contenedor
 COPY script_py/monitor.py /app/
 
+# Copiar el archivo config.yaml al contenedor
+COPY config.yaml /app/config.yaml
+
 # Copia el archivo requirements.txt e instala las dependencias
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
