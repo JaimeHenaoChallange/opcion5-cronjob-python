@@ -11,20 +11,41 @@ This project includes a Flask application deployed with ArgoCD and a CronJob tha
 
 ---
 
+## **Prerequisites**
+
+1. **Minikube**: Ensure Minikube is installed and running.
+2. **ArgoCD**: Installed in the Kubernetes cluster.
+3. **Slack Webhook**: A valid Slack webhook URL for notifications.
+4. **Docker Hub Account**: For pushing Docker images.
+5. **kubectl**: Installed and configured to interact with your Kubernetes cluster.
+6. **Python 3.9+**: Required for local testing of Python scripts.
+7. **GitHub Actions**: Optional, for automating Docker image builds and pushes.
+
+---
+
 ## **Project Structure**
 
 ```plaintext
 opcion5-cronjob-python/
 ├── app_flask/
 │   ├── main.py                # Flask application code
+│   ├── template/              # HTML templates for Flask
+│   ├── static/                # Static files (CSS, JS)
 │   ├── Dockerfile             # Dockerfile for Flask application
 │   ├── deployment.yaml        # Kubernetes Deployment for Flask application
 │   ├── service.yaml           # Kubernetes Service for Flask application
 │   └── application.yaml       # ArgoCD Application configuration for Flask
 ├── cronjob/
-│   ├── deploy_script.py       # Python script for the CronJob
+│   ├── script-py/             # Python scripts for the CronJob
+│   │   ├── deploy_script.py   # Main script for the CronJob
+│   │   ├── monitor.py         # Monitoring script
+│   │   ├── slack_notifier.py  # Slack notification logic
+│   │   ├── config.py          # Configuration loader
+│   │   ├── argocd_client.py   # ArgoCD API client
 │   ├── Dockerfile             # Dockerfile for the CronJob
 │   ├── cronjob.yaml           # Kubernetes CronJob configuration
+│   ├── role.yaml              # Role for accessing secrets
+│   ├── rolebinding.yaml       # RoleBinding for accessing secrets
 │   └── application.yaml       # ArgoCD Application configuration for CronJob
 ├── .github/
 │   └── workflows/
@@ -37,47 +58,27 @@ opcion5-cronjob-python/
 
 ---
 
-## **File Guide**
-
-### **1. Flask Application**
-
-- **`main.py`**: Contains the Flask application code with a simple route returning a greeting message.
-- **`Dockerfile`**: Defines the container image for the Flask application.
-- **`deployment.yaml`**: Kubernetes Deployment manifest for deploying the Flask application.
-- **`service.yaml`**: Kubernetes Service manifest to expose the Flask application.
-- **`application.yaml`**: ArgoCD Application configuration for managing the Flask application.
-
-### **2. CronJob**
-
-- **`deploy_script.py`**: Python script executed by the CronJob to monitor and synchronize ArgoCD applications.
-- **`Dockerfile`**: Defines the container image for the CronJob.
-- **`cronjob.yaml`**: Kubernetes CronJob manifest for scheduling the `deploy_script.py`.
-- **`application.yaml`**: ArgoCD Application configuration for managing the CronJob.
-
-### **3. GitHub Actions Workflows**
-
-- **`flask-app-deploy.yml`**: Automates the build and push of the Flask application Docker image.
-- **`cronjob-deploy.yml`**: Automates the build and push of the CronJob Docker image.
-
----
-
-## **Prerequisites**
-
-1. **Minikube**: Ensure Minikube is installed and running.
-2. **ArgoCD**: Installed in the Kubernetes cluster.
-3. **Slack Webhook**: A valid Slack webhook URL for notifications.
-4. **Docker Hub Account**: For pushing Docker images.
-
----
-
 ## **Setup Instructions**
 
 ### **1. Start Minikube**
 
-```bash
-minikube start
-kubectl config use-context minikube
-```
+1. Start Minikube:
+   ```bash
+   minikube start
+   kubectl config use-context minikube
+   ```
+
+2. Verify Minikube is running:
+   ```bash
+   minikube status
+   ```
+
+3. Retrieve the Minikube IP:
+   ```bash
+   minikube ip
+   ```
+
+---
 
 ### **2. Install ArgoCD**
 
@@ -99,6 +100,11 @@ kubectl config use-context minikube
 4. Retrieve the initial admin password:
    ```bash
    kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 --decode; echo
+   ```
+
+5. Access the ArgoCD UI:
+   ```bash
+   minikube service argocd-server -n argocd --url
    ```
 
 ---
@@ -130,6 +136,8 @@ kubectl config use-context minikube
 
 2. **CronJob**:
    ```bash
+   kubectl apply -f cronjob/role.yaml
+   kubectl apply -f cronjob/rolebinding.yaml
    kubectl apply -f cronjob/cronjob.yaml
    kubectl apply -f cronjob/application.yaml
    ```
@@ -155,51 +163,6 @@ kubectl config use-context minikube
 
 ---
 
-## **Flow Diagram**
-
-Below is a textual representation of the project flow:
-
-```plaintext
-Start
-  |
-  v
-[Minikube Setup] --> [Install ArgoCD]
-  |                     |
-  v                     v
-[Build Docker Images]   [Expose ArgoCD Server]
-  |                     |
-  v                     v
-[Deploy Flask App]      [Deploy CronJob]
-  |                     |
-  v                     v
-[Verify Deployments]    [Monitor Applications]
-  |                     |
-  v                     v
-[Slack Notifications] <--- [Sync Applications]
-  |
-  v
-End
-```
-
-You can visualize this flow using a tool like Mermaid. Example:
-
-```mermaid
-flowchart TD
-    A[Start] --> B[Minikube Setup]
-    B --> C[Install ArgoCD]
-    C --> D[Expose ArgoCD Server]
-    B --> E[Build Docker Images]
-    E --> F[Deploy Flask App]
-    E --> G[Deploy CronJob]
-    F --> H[Verify Deployments]
-    G --> I[Monitor Applications]
-    I --> J[Sync Applications]
-    J --> K[Slack Notifications]
-    K --> L[End]
-```
-
----
-
 ## **Environment Variables**
 
 ### **1. `.env` File**
@@ -209,45 +172,102 @@ The `.env` file contains sensitive information and should not be committed to Gi
 ```plaintext
 ARGOCD_SERVER=localhost:8080
 ARGOCD_USERNAME=admin
-ARGOCD_PASSWORD=Thomas#1109
-ARTIFACT_NAME=microservice
+ARGOCD_PASSWORD=admin123
+ARGOCD_API=https://localhost:8080/api/v1
+ARGOCD_TOKEN=<your-argocd-token>
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/your/webhook/url
 ```
 
 ---
 
-## **Error Handling and Validations**
+## **Common Errors and Solutions**
 
-### **Flask Application**
+### **1. Missing `argocd-token-secret`**
 
-- **Error Handling**: The Flask application includes basic error handling for invalid routes.
-- **Validation**: Ensure the `Dockerfile` and Kubernetes manifests are valid before deployment.
+**Error**:
+```plaintext
+Error: secret "argocd-token-secret" not found
+```
 
-### **CronJob**
+**Solution**:
+Create the missing secret:
+```bash
+kubectl create secret generic argocd-token-secret \
+  --namespace argocd \
+  --from-literal=token=<your-argocd-token>
+```
 
-- **Error Handling**: The `deploy_script.py` includes error handling for failed synchronization attempts and Slack notification failures.
-- **Validation**: Validate the `cronjob.yaml` file using:
-  ```bash
-  kubectl apply --dry-run=client -f cronjob/cronjob.yaml
-  ```
+Replace `<your-argocd-token>` with the actual token. You can generate it using:
+```bash
+argocd account generate-token --account admin
+```
 
 ---
 
-## **Slack Notifications**
+### **2. Slack Webhook Not Configured**
 
-The CronJob sends notifications to Slack using the webhook URL stored in the Kubernetes secret `slack-webhook-secret`. To create the secret:
+**Error**:
+```plaintext
+Error al enviar notificación a Slack: Invalid webhook URL
+```
 
+**Solution**:
+Ensure the `slack-webhook-secret` exists and contains the correct URL:
 ```bash
 kubectl create secret generic slack-webhook-secret \
   --from-literal=SLACK_WEBHOOK_URL="https://hooks.slack.com/services/your/webhook/url" \
   -n argocd
 ```
 
-Replace `https://hooks.slack.com/services/your/webhook/url` with your actual Slack webhook URL.
+---
 
-Verify the secret:
+### **3. Minikube IP Not Resolved**
 
+**Error**:
+```plaintext
+dial tcp: lookup $(MINIKUBE_IP): no such host
+```
+
+**Solution**:
+Ensure the `initContainer` in the `cronjob.yaml` correctly retrieves the Minikube IP. Verify with:
 ```bash
-kubectl get secret slack-webhook-secret -n argocd
+minikube ip
+```
+
+---
+
+### **4. ArgoCD Login Fails**
+
+**Error**:
+```plaintext
+Error al autenticar en ArgoCD: Command '['argocd', 'login', ...]' returned non-zero exit status
+```
+
+**Solution**:
+Verify the `ARGOCD_SERVER`, `ARGOCD_USERNAME`, and `ARGOCD_PASSWORD` environment variables are correct. Test the login manually:
+```bash
+argocd login <ARGOCD_SERVER> --username <ARGOCD_USERNAME> --password <ARGOCD_PASSWORD> --insecure
+```
+
+---
+
+## **Flow Diagram**
+
+Below is the updated flow diagram for the project:
+
+```mermaid
+flowchart TD
+    A[Start] --> B[Minikube Setup]
+    B --> C[Install ArgoCD]
+    C --> D[Expose ArgoCD Server]
+    B --> E[Build Docker Images]
+    E --> F[Deploy Flask App]
+    E --> G[Deploy CronJob]
+    F --> H[Verify Flask Deployment]
+    G --> I[Monitor ArgoCD Applications]
+    I --> J[Sync Applications]
+    J --> K[Send Slack Notifications]
+    K --> L[End]
 ```
 
 ---
