@@ -32,7 +32,7 @@ spec:
           serviceAccountName: argocd-monitor-sa
           containers:
             - name: argocd-monitor
-              image: jaimehenao8126/opcion5-deploy-script:35b64fe240891f9be1cc30f40fd841bb7bc2146e
+              image: jaimehenao8126/opcion5-deploy-script:fda0fb4bf88b9fdb73862ee2a5a9fda482bb564b
               env:
                 - name: ARGOCD_TOKEN
                   valueFrom:
