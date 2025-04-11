@@ -31,17 +31,18 @@ jobs:
         kubectl config current-context
         kubectl cluster-info
 
-    - name: Apply Prometheus and Grafana Configurations
+    - name: Apply Prometheus and Grafana Configurations from GitHub
       run: |
-        kubectl apply -f monitoreo/prometheus-configmap.yaml
-        kubectl apply -f monitoreo/prometheus-deployment.yaml
-        kubectl apply -f monitoreo/grafana-configmap.yaml
-        kubectl apply -f monitoreo/grafana-deployment.yaml
+        echo "Applying manifests from the repository..."
+        kubectl apply -f ./monitoreo/prometheus-configmap.yaml
+        kubectl apply -f ./monitoreo/prometheus-deployment.yaml
+        kubectl apply -f ./monitoreo/grafana-configmap.yaml
+        kubectl apply -f ./monitoreo/grafana-deployment.yaml
 
-    - name: Apply ArgoCD Applications
+    - name: Apply ArgoCD Applications from GitHub
       run: |
-        kubectl apply -f monitoreo/prometheus-application.yaml
-        kubectl apply -f monitoreo/grafana-application.yaml
+        kubectl apply -f ./monitoreo/prometheus-application.yaml
+        kubectl apply -f ./monitoreo/grafana-application.yaml
 
     - name: Verify Prometheus and Grafana in ArgoCD
       run: |
