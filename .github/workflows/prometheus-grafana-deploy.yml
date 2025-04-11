@@ -1,4 +1,4 @@
-name: Deploy Prometheus and Grafana with ArgoCD
+name: Deploy Prometheus and Grafana with Minikube
 
 on:
   push:
@@ -16,17 +16,15 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Set up kubectl
+    - name: Set up Minikube
       run: |
-        echo "Setting up kubectl..."
-        sudo apt-get update
-        sudo apt-get install -y kubectl
+        echo "Starting Minikube..."
+        minikube start --driver=docker
 
-    - name: Set up kubeconfig
-      env:
-        KUBECONFIG: /path/to/kubeconfig
+    - name: Set up kubectl for Minikube
       run: |
-        kubectl config use-context <context-name>
+        echo "Configuring kubectl for Minikube..."
+        kubectl config use-context minikube
 
     - name: Verify kubectl context
       run: |
