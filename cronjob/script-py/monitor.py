@@ -2,8 +2,8 @@ import sys
 import os
 import time
 import subprocess
-from script-py.argocd_client import ArgoCDClient
-from script-py.slack_notifier import SlackNotifier
+# from script_py.argocd_client import ArgoCDClient
+# from script_py.slack_notifier import SlackNotifier
 
 # Agregar el directorio de lógica al PYTHONPATH
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "logic"))
