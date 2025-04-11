@@ -1,5 +1,5 @@
 import requests
-from config import Config
+from script_py.config import Config
 
 class SlackNotifier:
     @staticmethod

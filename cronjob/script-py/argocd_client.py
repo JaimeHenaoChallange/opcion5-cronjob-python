@@ -1,6 +1,6 @@
 import requests
 import urllib3
-from config import Config
+from script_py.config import Config
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
