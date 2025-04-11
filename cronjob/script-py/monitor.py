@@ -18,10 +18,6 @@ def main():
         logging.error(f"Error de configuración: {e}")
         raise
 
-    attempts = {}
-    notified = set()
-    paused_apps = set()
-
     while True:
         try:
             apps = ArgoCDClient.get_applications(timeout=REQUEST_TIMEOUT)
@@ -29,34 +25,14 @@ def main():
                 app_name = app.get("metadata", {}).get("name", "Desconocido")
                 health_status = app["status"]["health"]["status"]
                 sync_status = app["status"]["sync"]["status"]
-                current_version = get_app_version(app)
 
-                if app_name not in app_versions:
-                    app_versions[app_name] = {"health_status": health_status, "version": current_version}
-
-                if health_status == "Healthy" and sync_status == "Synced":
-                    if app_name in notified or app_name in paused_apps:
-                        SlackNotifier.send_notification(app_name, "Healthy", attempts.get(app_name, 0), "La aplicación volvió a estar Healthy.")
-                        notified.discard(app_name)
-                        paused_apps.discard(app_name)
-                    attempts[app_name] = 0
-                elif sync_status == "OutOfSync":
-                    ArgoCDClient.sync_app(app_name, timeout=REQUEST_TIMEOUT)
-                    attempts[app_name] = attempts.get(app_name, 0) + 1
-                elif health_status in ["Degraded", "Error"]:
-                    if attempts.get(app_name, 0) < 3:
-                        ArgoCDClient.sync_app(app_name, timeout=REQUEST_TIMEOUT)
-                        attempts[app_name] = attempts.get(app_name, 0) + 1
-                    else:
-                        if app_name not in notified:
-                            SlackNotifier.send_notification(app_name, health_status, attempts[app_name], "La aplicación fue pausada después de 3 intentos fallidos.")
-                            paused_apps.add(app_name)
-                            notified.add(app_name)
-
-                app_versions[app_name]["health_status"] = health_status
-                app_versions[app_name]["version"] = current_version
+                # Lógica para manejar aplicaciones...
+                logging.info(f"Aplicación: {app_name}, Estado: {health_status}, Sincronización: {sync_status}")
 
             time.sleep(60)
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Error al ejecutar un comando de ArgoCD: {e}")
+            time.sleep(30)
         except Exception as e:
             logging.error(f"Error en el ciclo principal: {e}")
             time.sleep(30)
