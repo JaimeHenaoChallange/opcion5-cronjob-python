@@ -4,8 +4,8 @@ metadata:
   name: argocd-monitor-config
   namespace: poc
 data:
-  ARGOCD_API: "http://localhost:8080"  # Asegurar que incluya http://
-  ARGOCD_USERNAME: "admin"            # Nombre de usuario de ArgoCD
+  ARGOCD_API: "http://argocd-server.argocd.svc.cluster.local"  # Cambiar localhost a la dirección del servicio
+  ARGOCD_USERNAME: "admin"  # Nombre de usuario de ArgoCD
 
 ---
 apiVersion: v1
@@ -32,7 +32,7 @@ spec:
           serviceAccountName: argocd-monitor-sa
           containers:
             - name: argocd-monitor
-              image: jaimehenao8126/opcion5-deploy-script:36c136aab74cb08734bcd98f56d8719ba8796498
+              image: jaimehenao8126/opcion5-deploy-script:abf51999c40fbb5b4d10addb197ab625e0e29132
               env:
                 - name: ARGOCD_TOKEN
                   valueFrom:
