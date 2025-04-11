@@ -20,7 +20,7 @@ metadata:
   name: argocd-monitor
   namespace: poc
 spec:
-  schedule: "*/5 * * * *"  # Ejecuta cada 5 minutos
+  schedule: "*/1 * * * *"  # Ejecuta cada 5 minutos
   concurrencyPolicy: Forbid  # No permite que se ejecute un nuevo Job si ya hay uno en ejecución
   successfulJobsHistoryLimit: 1  # Retiene solo 1 Job exitoso
   failedJobsHistoryLimit: 1  # Retiene solo 1 Job fallido
