@@ -4,7 +4,7 @@ metadata:
   name: argocd-monitor-config
   namespace: poc
 data:
-  ARGOCD_API: "http://argocd-server.argocd.svc.cluster.local"  # Cambiar localhost a la dirección del servicio
+  ARGOCD_API: "http://argocd-server.argocd.svc.cluster.local/api/v1"  # Agregar /api/v1 al final
   ARGOCD_USERNAME: "admin"  # Nombre de usuario de ArgoCD
 
 ---
