@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Agregar el directorio 'cronjob' al PYTHONPATH
+sys.path.append(os.path.join(os.path.dirname(__file__), "../cronjob"))
+
 import pytest
 from unittest.mock import patch
 from script_py.argocd_client import ArgoCDClient

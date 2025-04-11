@@ -1,0 +1,33 @@
+name: Deploy Prometheus and Grafana
+
+on:
+  push:
+    paths:
+      - "monitoreo/**"
+      - ".github/workflows/prometheus-grafana-deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy-prometheus-grafana:
+    name: Deploy Prometheus and Grafana
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Start Prometheus and Grafana
+      working-directory: ./monitoreo
+      run: |
+        docker-compose up -d
+
+    - name: Verify Prometheus is running
+      run: |
+        curl -s http://localhost:9090 || echo "Prometheus is not running"
+
+    - name: Verify Grafana is running
+      run: |
+        curl -s http://localhost:3000 || echo "Grafana is not running"
