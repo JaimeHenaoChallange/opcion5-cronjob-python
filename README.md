@@ -37,11 +37,11 @@ opcion5-cronjob-python/
 │   └── application.yaml       # ArgoCD Application configuration for Flask
 ├── cronjob/
 │   ├── script-py/             # Python scripts for the CronJob
-│   │   ├── deploy_script.py   # Main script for the CronJob
-│   │   ├── monitor.py         # Monitoring script
-│   │   ├── slack_notifier.py  # Slack notification logic
-│   │   ├── config.py          # Configuration loader
-│   │   ├── argocd_client.py   # ArgoCD API client
+│   │   ├── deploy_script.py   # Main script for managing ArgoCD applications
+│   │   ├── monitor.py         # Main loop for monitoring applications
+│   │   ├── slack_notifier.py  # Handles Slack notifications
+│   │   ├── config.py          # Configuration loader and validator
+│   │   ├── argocd_client.py   # Interacts with the ArgoCD API
 │   ├── Dockerfile             # Dockerfile for the CronJob
 │   ├── cronjob.yaml           # Kubernetes CronJob configuration
 │   ├── role.yaml              # Role for accessing secrets
@@ -58,6 +58,43 @@ opcion5-cronjob-python/
 ├── .gitignore                 # Files ignored by Git
 └── README.md                  # Project documentation
 ```
+
+---
+
+## **Explanation of Files**
+
+### **1. Files in `script-py/`**
+
+- **`deploy_script.py`**:  
+  The main script for managing ArgoCD applications. It handles tasks such as synchronizing applications, checking their health, pausing applications, and sending notifications to Slack.
+
+- **`monitor.py`**:  
+  Contains the main loop for monitoring applications. It periodically checks the health and synchronization status of applications and takes appropriate actions (e.g., syncing, pausing, or notifying).
+
+- **`slack_notifier.py`**:  
+  Handles sending notifications to Slack using the webhook URL. It formats and sends messages about application statuses and actions taken.
+
+- **`config.py`**:  
+  Loads and validates environment variables required for the CronJob. It ensures that all necessary variables (e.g., `ARGOCD_API`, `ARGOCD_TOKEN`, `SLACK_WEBHOOK_URL`) are set.
+
+- **`argocd_client.py`**:  
+  Provides functions to interact with the ArgoCD API. It includes methods for listing applications, syncing them, and checking their health.
+
+---
+
+### **2. Files Outside `script-py/`**
+
+- **`Dockerfile`**:  
+  Defines the Docker image for the CronJob. It installs Python dependencies, the ArgoCD CLI, and sets up the environment to run the monitoring scripts.
+
+- **`cronjob.yaml`**:  
+  Configures the Kubernetes CronJob that runs the monitoring script periodically. It includes environment variables, resource limits, and the service account used for accessing Kubernetes secrets.
+
+- **`role.yaml` and `rolebinding.yaml`**:  
+  Define the Role and RoleBinding required for the CronJob to access Kubernetes resources such as secrets and ArgoCD applications.
+
+- **`application.yaml`**:  
+  Configures the ArgoCD Application resource for managing the CronJob itself. It ensures that the CronJob is synchronized with the Git repository.
 
 ---
 
@@ -112,23 +149,58 @@ opcion5-cronjob-python/
 
 ---
 
-### **3. Build and Push Docker Images**
+### **3. Obtain the ArgoCD Token**
 
-1. **Flask Application**:
+1. **Enable API Key Capability**:
+   Edit the ArgoCD ConfigMap to enable API key generation:
    ```bash
-   docker build -t <your-dockerhub-username>/flask-app:latest ./app_flask
-   docker push <your-dockerhub-username>/flask-app:latest
+   kubectl edit configmap argocd-cm -n argocd
    ```
 
-2. **CronJob**:
-   ```bash
-   docker build -t <your-dockerhub-username>/deploy-script:latest ./cronjob
-   docker push <your-dockerhub-username>/deploy-script:latest
+   Add the following under `data`:
+   ```yaml
+   data:
+     accounts.admin: apiKey
    ```
+
+2. **Restart the ArgoCD Server**:
+   ```bash
+   kubectl rollout restart deployment argocd-server -n argocd
+   ```
+
+3. **Generate the Token**:
+   Use the ArgoCD CLI to generate a token:
+   ```bash
+   argocd account generate-token --account admin
+   ```
+
+   Save the token for use in the `ARGOCD_TOKEN` environment variable.
 
 ---
 
-### **4. Deploy Resources to Kubernetes**
+### **4. Create Required Secrets**
+
+1. **Slack Webhook Secret**:
+   ```bash
+   kubectl create secret generic slack-webhook-secret \
+     --namespace poc \
+     --from-literal=SLACK_WEBHOOK_URL="https://hooks.slack.com/services/your/webhook/url"
+   ```
+
+   Replace `https://hooks.slack.com/services/your/webhook/url` with your actual Slack webhook URL.
+
+2. **ArgoCD Token Secret**:
+   ```bash
+   kubectl create secret generic argocd-monitor-secret \
+     --namespace poc \
+     --from-literal=ARGOCD_TOKEN=<your-argocd-token>
+   ```
+
+   Replace `<your-argocd-token>` with the token generated in the previous step.
+
+---
+
+### **5. Deploy Resources to Kubernetes**
 
 1. **Flask Application**:
    ```bash
@@ -153,7 +225,7 @@ opcion5-cronjob-python/
 
 ---
 
-### **5. Verify Deployments**
+### **6. Verify Deployments**
 
 1. **Check the Flask Service**:
    ```bash
@@ -169,115 +241,6 @@ opcion5-cronjob-python/
    ```bash
    kubectl logs <pod-name> -n poc
    ```
-
----
-
-## **Environment Variables**
-
-### **1. `.env` File**
-
-The `.env` file contains sensitive information and should not be committed to Git. Example:
-
-```plaintext
-ARGOCD_SERVER=localhost:8080
-ARGOCD_USERNAME=admin
-ARGOCD_PASSWORD=admin123
-ARGOCD_API=https://localhost:8080/api/v1
-ARGOCD_TOKEN=<your-argocd-token>
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/your/webhook/url
-```
-
----
-
-## **Common Errors and Solutions**
-
-### **1. Missing `argocd-token-secret`**
-
-**Error**:
-```plaintext
-Error: secret "argocd-token-secret" not found
-```
-
-**Solution**:
-Create the missing secret:
-```bash
-kubectl create secret generic argocd-token-secret \
-  --namespace argocd \
-  --from-literal=token=<your-argocd-token>
-```
-
-Replace `<your-argocd-token>` with the actual token. You can generate it using:
-```bash
-argocd account generate-token --account admin
-```
-
----
-
-### **2. Slack Webhook Not Configured**
-
-**Error**:
-```plaintext
-Error al enviar notificación a Slack: Invalid webhook URL
-```
-
-**Solution**:
-Ensure the `slack-webhook-secret` exists and contains the correct URL:
-```bash
-kubectl create secret generic slack-webhook-secret \
-  --from-literal=SLACK_WEBHOOK_URL="https://hooks.slack.com/services/your/webhook/url" \
-  -n argocd
-```
-
----
-
-### **3. Minikube IP Not Resolved**
-
-**Error**:
-```plaintext
-dial tcp: lookup $(MINIKUBE_IP): no such host
-```
-
-**Solution**:
-Ensure the `initContainer` in the `cronjob.yaml` correctly retrieves the Minikube IP. Verify with:
-```bash
-minikube ip
-```
-
----
-
-### **4. ArgoCD Login Fails**
-
-**Error**:
-```plaintext
-Error al autenticar en ArgoCD: Command '['argocd', 'login', ...]' returned non-zero exit status
-```
-
-**Solution**:
-Verify the `ARGOCD_SERVER`, `ARGOCD_USERNAME`, and `ARGOCD_PASSWORD` environment variables are correct. Test the login manually:
-```bash
-argocd login <ARGOCD_SERVER> --username <ARGOCD_USERNAME> --password <ARGOCD_PASSWORD> --insecure
-```
-
----
-
-## **Flow Diagram**
-
-Below is the updated flow diagram for the project:
-
-```mermaid
-flowchart TD
-    A[Start] --> B[Minikube Setup]
-    B --> C[Install ArgoCD]
-    C --> D[Expose ArgoCD Server]
-    B --> E[Build Docker Images]
-    E --> F[Deploy Flask App]
-    E --> G[Deploy CronJob]
-    F --> H[Verify Flask Deployment]
-    G --> I[Monitor ArgoCD Applications]
-    I --> J[Sync Applications]
-    J --> K[Send Slack Notifications]
-    K --> L[End]
-```
 
 ---
 

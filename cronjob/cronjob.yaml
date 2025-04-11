@@ -33,6 +33,11 @@ spec:
             - name: argocd-monitor
               image: jaimehenao8126/opcion5-deploy-script:eaa52d6d665d187a14d19ad2e351cc7aa957308e
               env:
+                - name: ARGOCD_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: argocd-monitor-secret
+                      key: ARGOCD_TOKEN
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
