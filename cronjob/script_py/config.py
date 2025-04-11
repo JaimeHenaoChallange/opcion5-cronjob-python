@@ -5,11 +5,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    ARGOCD_API = os.getenv("ARGOCD_API", "http://argocd-server.argocd.svc.cluster.local/api/v1")  # Asegurar que incluya /api/v1
-    ARGOCD_TOKEN = os.getenv("ARGOCD_TOKEN")
-    SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
+    try:
+        ARGOCD_API = os.getenv("ARGOCD_API", "https://localhost:8080/api/v1")
+        ARGOCD_TOKEN = os.getenv("ARGOCD_TOKEN")
+        SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 
-    @staticmethod
-    def validate():
-        if not Config.ARGOCD_API or not Config.ARGOCD_TOKEN or not Config.SLACK_WEBHOOK_URL:
-            raise ValueError("❌ Faltan variables de entorno requeridas: ARGOCD_API, ARGOCD_TOKEN o SLACK_WEBHOOK_URL.")
+        @staticmethod
+        def validate():
+            missing_vars = []
+            if not Config.ARGOCD_API:
+                missing_vars.append("ARGOCD_API")
+            if not Config.ARGOCD_TOKEN:
+                missing_vars.append("ARGOCD_TOKEN")
+            if not Config.SLACK_WEBHOOK_URL:
+                missing_vars.append("SLACK_WEBHOOK_URL")
+            if missing_vars:
+                raise ValueError(f"❌ Faltan variables de entorno requeridas: {', '.join(missing_vars)}")
+    except Exception as e:
+        print(f"❌ Error al cargar la configuración: {e}")
+        raise

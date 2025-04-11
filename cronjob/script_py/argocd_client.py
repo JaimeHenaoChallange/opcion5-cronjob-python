@@ -14,14 +14,8 @@ class ArgoCDClient:
             print(f"🔍 Respuesta del servidor: {response.status_code}")  # Depuración
             response.raise_for_status()
             return response.json().get("items", [])
-        except requests.exceptions.HTTPError as http_err:
-            print(f"❌ HTTP error: {http_err}")
-        except requests.exceptions.ConnectionError as conn_err:
-            print(f"❌ Connection error: {conn_err}")
-        except requests.exceptions.Timeout as timeout_err:
-            print(f"❌ Timeout error: {timeout_err}")
-        except Exception as e:
-            print(f"❌ Error desconocido: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error al obtener aplicaciones: {e}")
         return []
 
     @staticmethod
@@ -32,14 +26,8 @@ class ArgoCDClient:
             response = requests.post(f"{Config.ARGOCD_API}/applications/{app_name}/sync", headers=headers, verify=False, json={}, timeout=timeout)
             print(f"🔍 Respuesta del servidor: {response.status_code}")  # Depuración
             response.raise_for_status()
-        except requests.exceptions.HTTPError as http_err:
-            print(f"❌ HTTP error: {http_err}")
-        except requests.exceptions.ConnectionError as conn_err:
-            print(f"❌ Connection error: {conn_err}")
-        except requests.exceptions.Timeout as timeout_err:
-            print(f"❌ Timeout error: {timeout_err}")
-        except Exception as e:
-            print(f"❌ Error desconocido: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error al sincronizar la aplicación '{app_name}': {e}")
 
     @staticmethod
     def refresh_app(app_name, timeout=10):
@@ -49,14 +37,8 @@ class ArgoCDClient:
             response = requests.get(f"{Config.ARGOCD_API}/applications/{app_name}?refresh=true", headers=headers, verify=False, timeout=timeout)
             print(f"🔍 Respuesta del servidor: {response.status_code}")  # Depuración
             response.raise_for_status()
-        except requests.exceptions.HTTPError as http_err:
-            print(f"❌ HTTP error: {http_err}")
-        except requests.exceptions.ConnectionError as conn_err:
-            print(f"❌ Connection error: {conn_err}")
-        except requests.exceptions.Timeout as timeout_err:
-            print(f"❌ Timeout error: {timeout_err}")
-        except Exception as e:
-            print(f"❌ Error desconocido: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error al actualizar la aplicación '{app_name}': {e}")
 
     @staticmethod
     def get_application_status(app_name, timeout=10):
