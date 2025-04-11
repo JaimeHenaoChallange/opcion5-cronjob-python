@@ -4,7 +4,7 @@ metadata:
   name: argocd-monitor-config
   namespace: poc
 data:
-  ARGOCD_API: "https://argocd-server.argocd.svc.cluster.local/api/v1"
+  ARGOCD_API: "http://192.168.49.2:32376/api/v1"  # Cambiar a la IP y puerto correctos de Minikube
 
 ---
 apiVersion: v1
@@ -20,7 +20,7 @@ metadata:
   name: argocd-monitor
   namespace: poc
 spec:
-  schedule: "*/1 * * * *"  # Ejecuta cada 5 minutos
+  schedule: "*/1 * * * *"  # Ejecuta cada minuto
   concurrencyPolicy: Forbid  # No permite que se ejecute un nuevo Job si ya hay uno en ejecución
   successfulJobsHistoryLimit: 1  # Retiene solo 1 Job exitoso
   failedJobsHistoryLimit: 1  # Retiene solo 1 Job fallido
@@ -39,7 +39,7 @@ spec:
                       name: argocd-monitor-secret
                       key: ARGOCD_TOKEN
                 - name: ARGOCD_SERVER
-                  value: "https://argocd-server.argocd.svc.cluster.local"
+                  value: "http://192.168.49.2:32376"  # Cambiar a la IP y puerto correctos de Minikube
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
