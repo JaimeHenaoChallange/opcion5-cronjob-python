@@ -3,4 +3,6 @@ excluded_apps:
   - argocd-monitor
   - cronjob-deploy-checker
   - cronjob-hello-world
+  - prometheus
+  - grafana
 max_sync_attempts: 3
