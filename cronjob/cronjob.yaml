@@ -14,7 +14,7 @@ spec:
         spec:
           containers:
             - name: deploy-checker
-              image: jaimehenao8126/opcion5-deploy-script:3eabbc7ad8650cdc621429bb4ce97a5423d9b5c6
+              image: jaimehenao8126/opcion5-deploy-script:7773f8414a41394f0a15972dfcfed1dec6bdbf01
               envFrom:
                 - secretRef:
                     name: slack-webhook-secret
