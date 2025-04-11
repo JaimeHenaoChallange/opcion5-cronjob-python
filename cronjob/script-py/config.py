@@ -5,11 +5,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    # ARGOCD_API debe ser solo la dirección del servidor y el puerto (por ejemplo, "192.168.49.2:32376")
-    ARGOCD_API = os.getenv("ARGOCD_API", "192.168.49.2:32376")
+    # ARGOCD_API debe ser solo la dirección del servidor y el puerto (por ejemplo, "localhost:8080")
+    ARGOCD_API = os.getenv("ARGOCD_API", "localhost:8080")
     ARGOCD_TOKEN = os.getenv("ARGOCD_TOKEN")
     ARGOCD_USERNAME = os.getenv("ARGOCD_USERNAME")
-    ARGOCD_PASSWORD = os.getenv("ARGOCD_PASSWORD")  # Leer la contraseña desde la variable de entorno
+    ARGOCD_PASSWORD = os.getenv("ARGOCD_PASSWORD")
     SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 
     @staticmethod

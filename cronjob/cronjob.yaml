@@ -4,8 +4,8 @@ metadata:
   name: argocd-monitor-config
   namespace: poc
 data:
-  ARGOCD_API: "192.168.49.2:32376"  # Dirección y puerto del servidor ArgoCD
-  ARGOCD_USERNAME: "admin"          # Nombre de usuario de ArgoCD
+  ARGOCD_API: "localhost:8080"  # Cambiar a localhost:8080
+  ARGOCD_USERNAME: "admin"      # Nombre de usuario de ArgoCD
 
 ---
 apiVersion: v1
@@ -40,7 +40,7 @@ spec:
                       name: argocd-monitor-secret
                       key: ARGOCD_TOKEN
                 - name: ARGOCD_SERVER
-                  value: "192.168.49.2:32376"  # Correcto: solo dirección y puerto
+                  value: "localhost:8080"  # Cambiar a localhost:8080
                 - name: ARGOCD_PASSWORD
                   valueFrom:
                     secretKeyRef:
