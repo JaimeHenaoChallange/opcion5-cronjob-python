@@ -4,7 +4,7 @@ metadata:
   name: argocd-monitor-config
   namespace: poc
 data:
-  ARGOCD_API: "192.168.49.2:32376/api/v1"  # Eliminar el prefijo http://
+  ARGOCD_API: "192.168.49.2:32376"  # Correcto: solo dirección y puerto
 
 ---
 apiVersion: v1
@@ -39,7 +39,7 @@ spec:
                       name: argocd-monitor-secret
                       key: ARGOCD_TOKEN
                 - name: ARGOCD_SERVER
-                  value: "192.168.49.2:32376"  # Eliminar el prefijo http://
+                  value: "192.168.49.2:32376"  # Correcto: solo dirección y puerto
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:

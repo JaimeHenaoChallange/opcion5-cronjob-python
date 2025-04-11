@@ -5,6 +5,7 @@ class ArgoCDClient:
     @staticmethod
     def login(server, token):
         try:
+            # Usar solo la dirección del servidor y el puerto
             subprocess.run(
                 ["argocd", "login", server, "--auth-token", token, "--insecure"],
                 check=True
