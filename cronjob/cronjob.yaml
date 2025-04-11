@@ -12,15 +12,25 @@ spec:
     spec:
       template:
         spec:
+          initContainers:
+            - name: get-minikube-ip
+              image: bitnami/kubectl:latest
+              command: ["sh", "-c"]
+              args:
+                - |
+                  minikube_ip=$(minikube ip) && echo -n $minikube_ip > /etc/minikube-ip/minikube_ip
+              volumeMounts:
+                - name: minikube-ip
+                  mountPath: /etc/minikube-ip
           containers:
             - name: deploy-checker
               image: jaimehenao8126/opcion5-deploy-script:163abd185bd8451e25be18c2db234dfaff9baacb
-              envFrom:
-                - secretRef:
-                    name: slack-webhook-secret
               env:
                 - name: ARGOCD_SERVER
-                  value: "$(MINIKUBE_IP):8080"  # Use Minikube Node IP
+                  valueFrom:
+                    configMapKeyRef:
+                      name: minikube-ip-config
+                      key: ip
                 - name: ARGOCD_USERNAME
                   value: "admin"
                 - name: ARGOCD_PASSWORD
@@ -41,16 +51,6 @@ spec:
                       name: slack-webhook-secret
                       key: SLACK_WEBHOOK_URL
           restartPolicy: OnFailure
-          initContainers:
-            - name: get-minikube-ip
-              image: jaimehenao8126/opcion5-deploy-script:163abd185bd8451e25be18c2db234dfaff9baacb
-              command: ["sh", "-c"]
-              args:
-                - |
-                  export MINIKUBE_IP=$(minikube ip) && echo $MINIKUBE_IP > /etc/minikube-ip/env
-              volumeMounts:
-                - name: minikube-ip
-                  mountPath: /etc/minikube-ip
           volumes:
             - name: minikube-ip
               emptyDir: {}
