@@ -14,7 +14,7 @@ spec:
         spec:
           containers:
             - name: deploy-checker
-              image: jaimehenao8126/opcion5-deploy-script:21b891b8cd115a11d84e48fee941ab430c63b398
+              image: jaimehenao8126/opcion5-deploy-script:de1eea4df5f051315e7140ac335382ed64b8a9cf
               envFrom:
                 - secretRef:
                     name: slack-webhook-secret
@@ -28,10 +28,22 @@ spec:
                     secretKeyRef:
                       name: argocd-secret
                       key: admin.password
+                - name: ARGOCD_API
+                  value: "https://$(MINIKUBE_IP):8080/api/v1"  # Replace with the correct API URL
+                - name: ARGOCD_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: argocd-token-secret
+                      key: token  # Ensure this secret exists
+                - name: SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: slack-webhook-secret
+                      key: SLACK_WEBHOOK_URL
           restartPolicy: OnFailure
           initContainers:
             - name: get-minikube-ip
-              image: jaimehenao8126/opcion5-deploy-script:21b891b8cd115a11d84e48fee941ab430c63b398
+              image: jaimehenao8126/opcion5-deploy-script:de1eea4df5f051315e7140ac335382ed64b8a9cf
               command: ["sh", "-c"]
               args:
                 - |
