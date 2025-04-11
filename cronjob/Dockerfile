@@ -4,10 +4,10 @@ FROM python:3.9-slim
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copia el script Python al contenedor
-COPY deploy_script.py /app/deploy_script.py
+# Copia todos los archivos Python desde la carpeta script-py al contenedor
+COPY script-py/*.py /app/
 
-# Instala dependencias si es necesario (descomenta si tienes un requirements.txt)
+# Copia el archivo requirements.txt e instala las dependencias
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
@@ -18,4 +18,4 @@ RUN apt-get update && apt-get install -y curl && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Define el comando predeterminado para ejecutar el script
-CMD ["python", "/app/deploy_script.py"]
+CMD ["python", "/app/monitor.py"]
