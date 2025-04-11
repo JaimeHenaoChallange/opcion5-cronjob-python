@@ -66,7 +66,7 @@ opcion5-cronjob-python/
 ### **1. Files in `script-py/`**
 
 - **`deploy_script.py`**:  
-  The main script for managing ArgoCD applications. It handles tasks such as synchronizing applications, checking their health, pausing applications, and sending notifications to Slack.
+  The main script for managing ArgoCD applications. It handles tasks such as synchronizing applications, checking their health, pausing applications, and sending notifications to Slack. It also includes rollback functionality for applications.
 
 - **`monitor.py`**:  
   Contains the main loop for monitoring applications. It periodically checks the health and synchronization status of applications and takes appropriate actions (e.g., syncing, pausing, or notifying).
