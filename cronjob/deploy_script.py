@@ -36,6 +36,17 @@ def get_slack_webhook():
 
 SLACK_WEBHOOK_URL = get_slack_webhook()
 
+def argocd_login():
+    try:
+        subprocess.run(
+            ["argocd", "login", ARGOCD_SERVER, "--username", ARGOCD_USERNAME, "--password", ARGOCD_PASSWORD, "--insecure"],
+            check=True
+        )
+        logging.info("Autenticación en ArgoCD exitosa.")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error al autenticar en ArgoCD: {e}")
+        raise
+
 def get_applications():
     try:
         result = subprocess.run(
@@ -101,6 +112,7 @@ def resume_application(app_name):
 
 if __name__ == "__main__":
     try:
+        argocd_login()  # Ensure ArgoCD CLI is authenticated
         apps = get_applications()
         for app in apps:
             app_name = app["name"]
