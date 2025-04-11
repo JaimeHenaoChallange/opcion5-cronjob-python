@@ -14,6 +14,9 @@ GIT_BRANCH = "main"  # Rama principal
 # Diccionario para rastrear el estado y la versión de las aplicaciones
 app_versions = {}
 
+# Lista de aplicaciones a excluir de la revisión
+EXCLUDED_APPS = ["argocd-monitor", "cronjob-deploy-checker", "cronjob-hello-world"]
+
 def get_current_time():
     """Devuelve la fecha y hora actual formateada."""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -80,15 +83,16 @@ def main():
 
                 for app in apps:
                     try:
-                        print_separator()
                         app_name = app.get("metadata", {}).get("name", "Desconocido")
+
+                        # Omitir aplicaciones excluidas
+                        if app_name in EXCLUDED_APPS:
+                            continue
+
+                        print_separator()
                         health_status = app["status"]["health"]["status"]
                         sync_status = app["status"]["sync"]["status"]
                         current_version = get_app_version(app)
-
-                        if app_name == "argocd-monitor":
-                            print(f"{get_current_time()} ⏩ Excluyendo la aplicación '{app_name}' del análisis.\n")
-                            continue
 
                         print(f"{get_current_time()} 🔄 Procesando la aplicación: {app_name}\n")
                         ArgoCDClient.refresh_app(app_name, timeout=REQUEST_TIMEOUT)
