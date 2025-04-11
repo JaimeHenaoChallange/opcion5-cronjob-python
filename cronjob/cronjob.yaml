@@ -4,7 +4,7 @@ metadata:
   name: argocd-monitor-config
   namespace: poc
 data:
-  ARGOCD_API: "localhost:8080"  # Cambiar a localhost:8080
+  ARGOCD_API: "localhost:8080"  # Usar localhost:8080
   ARGOCD_USERNAME: "admin"      # Nombre de usuario de ArgoCD
 
 ---
@@ -22,9 +22,9 @@ metadata:
   namespace: poc
 spec:
   schedule: "*/1 * * * *"  # Ejecuta cada minuto
-  concurrencyPolicy: Forbid  # No permite que se ejecute un nuevo Job si ya hay uno en ejecución
-  successfulJobsHistoryLimit: 1  # Retiene solo 1 Job exitoso
-  failedJobsHistoryLimit: 1  # Retiene solo 1 Job fallido
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       template:
@@ -40,7 +40,7 @@ spec:
                       name: argocd-monitor-secret
                       key: ARGOCD_TOKEN
                 - name: ARGOCD_SERVER
-                  value: "localhost:8080"  # Cambiar a localhost:8080
+                  value: "localhost:8080"  # Usar localhost:8080
                 - name: ARGOCD_PASSWORD
                   valueFrom:
                     secretKeyRef:

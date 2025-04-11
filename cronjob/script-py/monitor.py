@@ -11,7 +11,7 @@ app_versions = {}
 def get_app_version(app):
     return app.get("metadata", {}).get("annotations", {}).get("argocd.argoproj.io/revision", "unknown")
 
-def main():
+def validate_config():
     try:
         Config.validate()
         logging.info("Todas las variables de entorno requeridas están configuradas.")
@@ -26,6 +26,7 @@ def main():
         logging.error(f"Error de configuración: {e}")
         raise
 
+def monitor_applications():
     while True:
         try:
             apps = ArgoCDClient.get_applications(timeout=REQUEST_TIMEOUT)
@@ -44,6 +45,10 @@ def main():
         except Exception as e:
             logging.error(f"Error en el ciclo principal: {e}")
             time.sleep(30)
+
+def main():
+    validate_config()
+    monitor_applications()
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
