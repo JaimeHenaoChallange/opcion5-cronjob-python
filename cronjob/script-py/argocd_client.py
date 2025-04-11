@@ -1,61 +1,82 @@
-import subprocess
-import logging
+import requests
+import urllib3
+from config import Config
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class ArgoCDClient:
     @staticmethod
-    def login(server, token=None, username=None, password=None):
-        try:
-            if token:
-                # Usar token de autenticación
-                subprocess.run(
-                    ["argocd", "login", server, "--auth-token", token, "--insecure"],
-                    check=True
-                )
-            elif username and password:
-                # Usar nombre de usuario y contraseña
-                subprocess.run(
-                    ["argocd", "login", server, "--username", username, "--password", password, "--insecure"],
-                    check=True
-                )
-            else:
-                raise ValueError("Se requiere un token o un nombre de usuario y contraseña para autenticar.")
-            logging.info(f"Conexión exitosa al servidor ArgoCD: {server}")
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Error al autenticar en ArgoCD: {e}")
-            raise
-
-    @staticmethod
     def get_applications(timeout=10):
+        headers = {"Authorization": "Bearer ***"}
+        print(f"🔍 Enviando solicitud a {Config.ARGOCD_API}/applications con headers {headers}")  # Depuración
         try:
-            result = subprocess.run(
-                ["argocd", "app", "list", "--output", "json"],
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            )
-            result.check_returncode()
-            return eval(result.stdout)  # Convierte el JSON a un diccionario
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Error al obtener aplicaciones de ArgoCD: {e}")
-            logging.error(f"Salida estándar: {e.stdout}")
-            logging.error(f"Error estándar: {e.stderr}")
-            raise
-        except FileNotFoundError:
-            logging.error("El comando 'argocd' no está disponible. Asegúrate de que el CLI de ArgoCD esté instalado.")
-            raise
+            response = requests.get(f"{Config.ARGOCD_API}/applications", headers=headers, verify=False, timeout=timeout)
+            print(f"🔍 Respuesta del servidor: {response.status_code}")  # Depuración
+            response.raise_for_status()
+            return response.json().get("items", [])
+        except requests.exceptions.HTTPError as http_err:
+            print(f"❌ HTTP error: {http_err}")
+        except requests.exceptions.ConnectionError as conn_err:
+            print(f"❌ Connection error: {conn_err}")
+        except requests.exceptions.Timeout as timeout_err:
+            print(f"❌ Timeout error: {timeout_err}")
         except Exception as e:
-            logging.error(f"Error inesperado al obtener aplicaciones de ArgoCD: {e}")
-            raise
+            print(f"❌ Error desconocido: {e}")
+        return []
 
     @staticmethod
     def sync_app(app_name, timeout=10):
+        headers = {"Authorization": "Bearer ***", "Content-Type": "application/json"}
+        print(f"🔍 Enviando solicitud de sincronización para la aplicación {app_name}")  # Depuración
         try:
-            subprocess.run(
-                ["argocd", "app", "sync", app_name],
-                check=True,
-                timeout=timeout
-            )
-            logging.info(f"Sincronización exitosa para la aplicación: {app_name}")
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Error al sincronizar la aplicación {app_name}: {e}")
-            raise
+            response = requests.post(f"{Config.ARGOCD_API}/applications/{app_name}/sync", headers=headers, verify=False, json={}, timeout=timeout)
+            print(f"🔍 Respuesta del servidor: {response.status_code}")  # Depuración
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as http_err:
+            print(f"❌ HTTP error: {http_err}")
+        except requests.exceptions.ConnectionError as conn_err:
+            print(f"❌ Connection error: {conn_err}")
+        except requests.exceptions.Timeout as timeout_err:
+            print(f"❌ Timeout error: {timeout_err}")
+        except Exception as e:
+            print(f"❌ Error desconocido: {e}")
+
+    @staticmethod
+    def refresh_app(app_name, timeout=10):
+        headers = {"Authorization": "Bearer ***"}
+        print(f"🔍 Enviando solicitud de actualización para la aplicación {app_name}")  # Depuración
+        try:
+            response = requests.get(f"{Config.ARGOCD_API}/applications/{app_name}?refresh=true", headers=headers, verify=False, timeout=timeout)
+            print(f"🔍 Respuesta del servidor: {response.status_code}")  # Depuración
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as http_err:
+            print(f"❌ HTTP error: {http_err}")
+        except requests.exceptions.ConnectionError as conn_err:
+            print(f"❌ Connection error: {conn_err}")
+        except requests.exceptions.Timeout as timeout_err:
+            print(f"❌ Timeout error: {timeout_err}")
+        except Exception as e:
+            print(f"❌ Error desconocido: {e}")
+
+    @staticmethod
+    def get_application_status(app_name, timeout=10):
+        headers = {"Authorization": "Bearer ***"}
+        print(f"🔍 Enviando solicitud para obtener el estado de la aplicación {app_name}")  # Depuración
+        try:
+            response = requests.get(f"{Config.ARGOCD_API}/applications/{app_name}", headers=headers, verify=False, timeout=timeout)
+            print(f"🔍 Respuesta del servidor: {response.status_code}")  # Depuración
+            response.raise_for_status()
+            app_info = response.json()
+            health_status = app_info.get("status", {}).get("health", {}).get("status", "Unknown")
+            sync_status = app_info.get("status", {}).get("sync", {}).get("status", "Unknown")
+            print(f"🔍 Estado de salud: {health_status}, Estado de sincronización: {sync_status}")  # Depuración
+            return health_status, sync_status
+        except requests.exceptions.HTTPError as http_err:
+            print(f"❌ HTTP error: {http_err}")
+        except requests.exceptions.ConnectionError as conn_err:
+            print(f"❌ Connection error: {conn_err}")
+        except requests.exceptions.Timeout as timeout_err:
+            print(f"❌ Timeout error: {timeout_err}")
+        except Exception as e:
+            print(f"❌ Error desconocido: {e}")
+        return "Unknown", "Unknown"

@@ -4,6 +4,9 @@ metadata:
   namespace: argocd
   name: secret-reader
 rules:
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods", "secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications"]
+    verbs: ["get", "list", "watch", "sync", "update"]

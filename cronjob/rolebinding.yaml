@@ -5,7 +5,7 @@ metadata:
   name: secret-reader-binding
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: argocd-monitor-sa
   namespace: argocd
 roleRef:
   kind: Role
