@@ -4,7 +4,8 @@ metadata:
   name: argocd-monitor-config
   namespace: poc
 data:
-  ARGOCD_API: "192.168.49.2:32376"  # Correcto: solo dirección y puerto
+  ARGOCD_API: "192.168.49.2:32376"  # Dirección y puerto del servidor ArgoCD
+  ARGOCD_USERNAME: "admin"          # Nombre de usuario de ArgoCD
 
 ---
 apiVersion: v1
@@ -40,6 +41,11 @@ spec:
                       key: ARGOCD_TOKEN
                 - name: ARGOCD_SERVER
                   value: "192.168.49.2:32376"  # Correcto: solo dirección y puerto
+                - name: ARGOCD_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: argocd-password-secret
+                      key: ARGOCD_PASSWORD
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:

@@ -17,9 +17,11 @@ def main():
         logging.info("Todas las variables de entorno requeridas están configuradas.")
         if Config.ARGOCD_TOKEN:
             ArgoCDClient.login(Config.ARGOCD_API, token=Config.ARGOCD_TOKEN)
+        elif Config.ARGOCD_USERNAME and Config.ARGOCD_PASSWORD:
+            ArgoCDClient.login(Config.ARGOCD_API, username=Config.ARGOCD_USERNAME, password=Config.ARGOCD_PASSWORD)
         else:
-            logging.error("No se proporcionó un token de autenticación.")
-            raise ValueError("Se requiere un token de autenticación para iniciar sesión en ArgoCD.")
+            logging.error("No se proporcionaron credenciales válidas para autenticar en ArgoCD.")
+            raise ValueError("Se requiere un token o credenciales de usuario para iniciar sesión en ArgoCD.")
     except ValueError as e:
         logging.error(f"Error de configuración: {e}")
         raise
