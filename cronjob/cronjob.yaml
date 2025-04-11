@@ -20,7 +20,7 @@ spec:
                     name: slack-webhook-secret
               env:
                 - name: ARGOCD_SERVER
-                  value: "http://192.168.49.2:8080"  # Kubernetes Node IP
+                  value: "$(MINIKUBE_IP):8080"  # Use Minikube Node IP
                 - name: ARGOCD_USERNAME
                   value: "admin"
                 - name: ARGOCD_PASSWORD
@@ -29,3 +29,16 @@ spec:
                       name: argocd-secret
                       key: admin.password
           restartPolicy: OnFailure
+          initContainers:
+            - name: get-minikube-ip
+              image: bitnami/kubectl:latest
+              command: ["sh", "-c"]
+              args:
+                - |
+                  export MINIKUBE_IP=$(minikube ip) && echo $MINIKUBE_IP > /etc/minikube-ip/env
+              volumeMounts:
+                - name: minikube-ip
+                  mountPath: /etc/minikube-ip
+          volumes:
+            - name: minikube-ip
+              emptyDir: {}
