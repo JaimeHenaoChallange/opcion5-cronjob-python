@@ -4,7 +4,7 @@ metadata:
   name: argocd-monitor-config
   namespace: poc
 data:
-  ARGOCD_API: "http://192.168.49.2:32376/api/v1"  # Cambiar a la IP y puerto correctos de Minikube
+  ARGOCD_API: "192.168.49.2:32376/api/v1"  # Eliminar el prefijo http://
 
 ---
 apiVersion: v1
@@ -39,7 +39,7 @@ spec:
                       name: argocd-monitor-secret
                       key: ARGOCD_TOKEN
                 - name: ARGOCD_SERVER
-                  value: "http://192.168.49.2:32376"  # Cambiar a la IP y puerto correctos de Minikube
+                  value: "192.168.49.2:32376"  # Eliminar el prefijo http://
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
