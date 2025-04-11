@@ -8,6 +8,9 @@ WORKDIR /app
 COPY script_py/*.py /app/script_py/
 COPY script_py/__init__.py /app/script_py/
 
+# Copia el archivo monitor.py al directorio raíz del contenedor
+COPY script_py/monitor.py /app/
+
 # Copia el archivo requirements.txt e instala las dependencias
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
