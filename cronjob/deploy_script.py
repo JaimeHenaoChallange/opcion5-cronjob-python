@@ -110,6 +110,31 @@ def resume_application(app_name):
     except subprocess.CalledProcessError as e:
         logging.error(f"Error al reanudar la aplicación {app_name}: {e}")
 
+GIT_REPO_PATH = "/tmp/argocd-repo"  # Ruta temporal para clonar el repositorio
+GIT_REPO_URL = "https://github.com/JaimeHenaoChallange/monitor-argocd-cronjob-1.git"  # URL del repositorio
+GIT_BRANCH = "main"  # Rama principal
+
+app_versions = {}  # Diccionario para rastrear el estado y la versión de las aplicaciones
+
+def get_app_version(app):
+    """Obtiene la versión de la aplicación desde su etiqueta o anotación."""
+    return app.get("metadata", {}).get("annotations", {}).get("argocd.argoproj.io/revision", "unknown")
+
+def rollback_application(app_name):
+    """Realiza un rollback de la aplicación actualizando el repositorio de Git."""
+    try:
+        if not os.path.exists(GIT_REPO_PATH):
+            subprocess.run(["git", "clone", GIT_REPO_URL, GIT_REPO_PATH], check=True)
+        os.chdir(GIT_REPO_PATH)
+        subprocess.run(["git", "checkout", GIT_BRANCH], check=True)
+        subprocess.run(["git", "revert", "--no-commit", "HEAD"], check=True)
+        subprocess.run(["git", "commit", "-m", f"Rollback for application {app_name}"], check=True)
+        subprocess.run(["git", "push", "origin", GIT_BRANCH], check=True)
+        subprocess.run(["argocd", "app", "sync", app_name], check=True)
+        logging.info(f"Rollback completado para la aplicación '{app_name}'.")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error al realizar el rollback para '{app_name}': {e}")
+
 if __name__ == "__main__":
     try:
         argocd_login()  # Ensure ArgoCD CLI is authenticated
@@ -117,14 +142,29 @@ if __name__ == "__main__":
         for app in apps:
             app_name = app["name"]
             app_status = app["status"]
+            current_version = get_app_version(app)
+
+            if app_name not in app_versions:
+                app_versions[app_name] = {"status": app_status, "version": current_version}
+
+            previous_status = app_versions[app_name]["status"]
+            previous_version = app_versions[app_name]["version"]
+
             if app_status in ["OutOfSync", "Degraded", "Error"]:
                 logging.info(f"Analizando aplicación: {app_name}")
                 if not deploy(app_name):
                     logging.warning(f"{app_name} sigue en estado {app_status}. Pausando...")
                     pause_application(app_name)
                     notify_slack(f"{app_name} está en estado {app_status} y ha sido pausado.")
+                elif current_version != previous_version:
+                    logging.info(f"Rollback iniciado para {app_name} debido a cambio de versión.")
+                    rollback_application(app_name)
+                    notify_slack(f"Rollback realizado para {app_name} a la versión {current_version}.")
             elif app_status == "Paused":
                 logging.info(f"Reanudando aplicación pausada: {app_name}")
                 resume_application(app_name)
+
+            app_versions[app_name]["status"] = app_status
+            app_versions[app_name]["version"] = current_version
     except Exception as e:
         logging.error(f"Error en el script: {e}")

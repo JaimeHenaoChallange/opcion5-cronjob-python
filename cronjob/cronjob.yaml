@@ -20,7 +20,7 @@ spec:
                     name: slack-webhook-secret
               env:
                 - name: ARGOCD_SERVER
-                  value: "http://192.168.49.2:8080"
+                  value: "http://192.168.49.2:8080"  # Kubernetes Node IP
                 - name: ARGOCD_USERNAME
                   value: "admin"
                 - name: ARGOCD_PASSWORD
