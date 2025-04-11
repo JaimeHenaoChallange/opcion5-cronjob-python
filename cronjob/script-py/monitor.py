@@ -1,5 +1,6 @@
 import time
 import logging
+import subprocess  # Importar subprocess
 from argocd_client import ArgoCDClient
 from slack_notifier import SlackNotifier
 from config import Config

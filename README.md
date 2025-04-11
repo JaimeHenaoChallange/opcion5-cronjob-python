@@ -66,7 +66,7 @@ opcion5-cronjob-python/
 ### **1. Files in `script-py/`**
 
 - **`deploy_script.py`**:  
-  The main script for managing ArgoCD applications. It handles tasks such as synchronizing applications, checking their health, pausing applications, and sending notifications to Slack. It also includes rollback functionality for applications.
+  The main script for managing ArgoCD applications. It handles tasks such as synchronizing applications, checking their health, pausing applications, and sending notifications to Slack. It also includes rollback functionality for applications by interacting with a Git repository.
 
 - **`monitor.py`**:  
   Contains the main loop for monitoring applications. It periodically checks the health and synchronization status of applications and takes appropriate actions (e.g., syncing, pausing, or notifying).
@@ -78,7 +78,7 @@ opcion5-cronjob-python/
   Loads and validates environment variables required for the CronJob. It ensures that all necessary variables (e.g., `ARGOCD_API`, `ARGOCD_TOKEN`, `SLACK_WEBHOOK_URL`) are set.
 
 - **`argocd_client.py`**:  
-  Provides functions to interact with the ArgoCD API. It includes methods for listing applications, syncing them, and checking their health.
+  Provides functions to interact with the ArgoCD API. It includes methods for listing applications, syncing them, and checking their health. It also handles errors gracefully and logs detailed information about failures.
 
 ---
 
@@ -95,6 +95,24 @@ opcion5-cronjob-python/
 
 - **`application.yaml`**:  
   Configures the ArgoCD Application resource for managing the CronJob itself. It ensures that the CronJob is synchronized with the Git repository.
+
+---
+
+## **ConfigMap Explanation**
+
+The `ConfigMap` is used to store configuration data for the CronJob. It includes the URL of the ArgoCD API:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-monitor-config
+  namespace: poc
+data:
+  ARGOCD_API: "https://argocd-server.argocd.svc.cluster.local/api/v1"
+```
+
+This `ConfigMap` is mounted into the CronJob as an environment variable (`ARGOCD_API`) to allow the script to communicate with the ArgoCD server.
 
 ---
 
