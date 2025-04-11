@@ -11,7 +11,13 @@ def get_app_version(app):
     return app.get("metadata", {}).get("annotations", {}).get("argocd.argoproj.io/revision", "unknown")
 
 def main():
-    Config.validate()
+    try:
+        Config.validate()
+        logging.info("Todas las variables de entorno requeridas están configuradas.")
+    except ValueError as e:
+        logging.error(f"Error de configuración: {e}")
+        raise
+
     attempts = {}
     notified = set()
     paused_apps = set()

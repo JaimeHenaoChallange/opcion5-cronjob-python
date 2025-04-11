@@ -11,5 +11,7 @@ class Config:
 
     @staticmethod
     def validate():
-        if not Config.ARGOCD_API or not Config.ARGOCD_TOKEN or not Config.SLACK_WEBHOOK_URL:
-            raise ValueError("Faltan variables de entorno requeridas: ARGOCD_API, ARGOCD_TOKEN o SLACK_WEBHOOK_URL.")
+        required_vars = ["ARGOCD_API", "ARGOCD_TOKEN", "SLACK_WEBHOOK_URL"]
+        missing_vars = [var for var in required_vars if not os.getenv(var)]
+        if missing_vars:
+            raise ValueError(f"Faltan variables de entorno requeridas: {', '.join(missing_vars)}")
