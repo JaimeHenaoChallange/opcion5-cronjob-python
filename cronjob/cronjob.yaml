@@ -14,7 +14,7 @@ spec:
         spec:
           containers:
             - name: deploy-checker
-              image: jaimehenao8126/opcion5-deploy-script:5ffc9e82ea3416c0b3e8ce3ee7b98fb300d901fc
+              image: jaimehenao8126/opcion5-deploy-script:de1eea4df5f051315e7140ac335382ed64b8a9cf
               envFrom:
                 - secretRef:
                     name: slack-webhook-secret
@@ -31,7 +31,7 @@ spec:
           restartPolicy: OnFailure
           initContainers:
             - name: get-minikube-ip
-              image: jaimehenao8126/opcion5-deploy-script:5ffc9e82ea3416c0b3e8ce3ee7b98fb300d901fc
+              image: jaimehenao8126/opcion5-deploy-script:de1eea4df5f051315e7140ac335382ed64b8a9cf
               command: ["sh", "-c"]
               args:
                 - |
