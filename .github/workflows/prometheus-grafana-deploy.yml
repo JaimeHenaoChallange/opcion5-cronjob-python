@@ -26,11 +26,16 @@ jobs:
         echo "Configuring kubectl for Minikube..."
         kubectl config use-context minikube
 
+    - name: Install ArgoCD CRDs
+      run: |
+        echo "Installing ArgoCD CRDs..."
+        kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
     - name: Verify kubectl context
       run: |
         kubectl config current-context
         kubectl cluster-info
-    
+
     - name: Create Namespace for Monitoring
       run: |
         echo "Creating namespace for monitoring..."
