@@ -18,3 +18,8 @@ spec:
     automated:
       prune: true
       selfHeal: true
+  ports:
+    - port: 8000
+  selector:
+    matchLabels:
+      app: argocd-monitor

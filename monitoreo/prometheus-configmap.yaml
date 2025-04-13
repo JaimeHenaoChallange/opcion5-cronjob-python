@@ -10,4 +10,4 @@ data:
     scrape_configs:
       - job_name: "cronjob-monitor"
         static_configs:
-          - targets: ["cronjob-monitor.poc.svc.cluster.local:8000"]  # Cambiado a la dirección del servicio
+          - targets: ["cronjob-monitor.poc.svc.cluster.local:8000"]  # Dirección del servicio

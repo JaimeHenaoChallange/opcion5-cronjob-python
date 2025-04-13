@@ -35,10 +35,10 @@ metadata:
   name: grafana
   namespace: poc
 spec:
-  type: NodePort  # Cambiado de ClusterIP a NodePort
+  type: NodePort
   ports:
   - port: 3000
     targetPort: 3000
-    nodePort: 30300  # Puerto NodePort explícito
+    nodePort: 30300
   selector:
     app: grafana
