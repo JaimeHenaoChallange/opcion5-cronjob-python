@@ -26,6 +26,11 @@ jobs:
         echo "Configuring kubectl for Minikube..."
         kubectl config use-context minikube
 
+    - name: Create Namespace for ArgoCD
+      run: |
+        echo "Creating namespace for ArgoCD..."
+        kubectl create namespace argocd || echo "Namespace 'argocd' already exists"
+
     - name: Install ArgoCD CRDs
       run: |
         echo "Installing ArgoCD CRDs..."
@@ -40,7 +45,6 @@ jobs:
       run: |
         echo "Creating namespace for monitoring..."
         kubectl create namespace poc || echo "Namespace 'poc' already exists"
-        kubectl create namespace argocd || echo "Namespace 'argocd' already exists"
 
     - name: Apply Prometheus and Grafana Configurations from GitHub
       run: |
