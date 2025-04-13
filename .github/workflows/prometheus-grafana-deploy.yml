@@ -30,6 +30,12 @@ jobs:
       run: |
         kubectl config current-context
         kubectl cluster-info
+    
+    - name: Create Namespace for Monitoring
+      run: |
+        echo "Creating namespace for monitoring..."
+        kubectl create namespace poc || echo "Namespace 'poc' already exists"
+        kubectl create namespace argocd || echo "Namespace 'argocd' already exists"
 
     - name: Apply Prometheus and Grafana Configurations from GitHub
       run: |
